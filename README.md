@@ -53,14 +53,24 @@ flowchart LR
 | 04 | [子智能体编排](./labs/04_subagent_orchestration/subagents.py) | 大任务串行慢、主上下文被污染 | Planner/Worker/Reviewer · 独立上下文 · 并发限流 · 超时重试降级 | `python3 labs/04_subagent_orchestration/subagents.py` |
 | 05 | [Hooks 与安全护栏](./labs/05_hooks_guardrails/hooks.py) | Agent 执行危险命令、泄露密钥 | PreToolUse / PostToolUse · 人工确认 · 输出脱敏 · 审计日志 | `python3 labs/05_hooks_guardrails/hooks.py` |
 | 06 | [跨会话记忆](./labs/06_agent_memory/memory.py) | 每次新会话都“失忆” | 观察提炼 · 去重 · 重要度 × 时间衰减 × 相关度打分 | `python3 labs/06_agent_memory/memory.py` |
+| 07 | [MCP Server & Client (JSON-RPC 2.0)](./labs/07_mcp_server_stdio/mcp_stdio.py) | 工具与知识库如何标准化挂载到 Claude Code / Cursor | `@srv.tool` 自动生成 Schema · `initialize` / `tools/call` / `resources/read` · 支持 `--stdio` 直接挂载 | `python3 labs/07_mcp_server_stdio/mcp_stdio.py` |
+| 08 | [自我验证与报错驱动修复闭环](./labs/08_self_verification_loop/verify_loop.py) | Agent 改完代码不跑测试直接交差 | 真实子进程运行 `unittest` · 提取 Traceback 回填 · 多轮自动修复收敛 | `python3 labs/08_self_verification_loop/verify_loop.py` |
 
 ## 🚀 快速开始
 
 ```bash
 git clone https://github.com/wangguode/coding-agent-harness-patterns.git
 cd coding-agent-harness-patterns
-python3 labs/05_hooks_guardrails/hooks.py      # 看看 rm -rf / 是怎么被拦下的
-for f in labs/*/*.py; do python3 "$f"; done     # 一次跑完全部模式
+
+# 方式一：零安装直接用 python3 运行任意模式
+python3 labs/07_mcp_server_stdio/mcp_stdio.py
+python3 labs/08_self_verification_loop/verify_loop.py
+
+# 方式二：安装 `wg-harness` 命令行工具箱（支持一键跑全套或作为真实 MCP Server 挂载）
+pip install -e .
+wg-harness list
+wg-harness run all
+wg-harness mcp-stdio   # 标准 stdio 模式，可直接配置进 Claude Code / Cursor 的 mcpServers
 ```
 
 示例输出（Lab 05）：
@@ -83,15 +93,18 @@ $ env                              -> PATH=/usr/bin | OPENAI_API_KEY=[REDACTED] 
 | Agent Skills | [Agent篇(29)：Agent Skills——把企业能力封装成可安装的软件包](https://zhuanlan.zhihu.com/p/2072106765785867888) |
 | 工具调用演进 | [从“能聊”到“能干”：深度拆解 Function Calling、MCP 与 Anthropic Skills](https://zhuanlan.zhihu.com/p/78345307884) |
 
-更多文章索引与语音 / RAG 方向的代码见 👉 [AI-Agent-and-Voice-Engineering](https://github.com/wangguode/AI-Agent-and-Voice-Engineering)
+更多文章索引与语音 / RAG 方向的代码见：
+- 📞 [voice-agent-rtp-gateway](https://github.com/wangguode/voice-agent-rtp-gateway) —— 企业级中文实时语音智能体网关（FreeSWITCH 8kHz RTP/WebSocket + Pipecat 全双工流式管道 + 60ms 毫秒级打断）
+- 🧭 [AI-Agent-and-Voice-Engineering](https://github.com/wangguode/AI-Agent-and-Voice-Engineering) —— 知乎 @王果ai 100+ 篇长文全景索引与配套代码实验室
 
 ## 🛣️ Roadmap
 
 - [x] 01~06：核心 Harness 模式最小实现
-- [ ] 07 MCP Server 最小实现（stdio 传输 + 工具发现）
-- [ ] 08 Plan Mode：先规划后执行，计划审批
-- [ ] 09 自我验证循环：写代码 → 跑测试 → 读报错 → 修复
-- [ ] 10 接入真实模型（OpenAI 兼容接口，可切换 Mock）
+- [x] 07 MCP Server 最小实现（JSON-RPC 2.0 over stdio + 工具装饰器 + 资源发现）
+- [x] 08 自我验证循环：写代码 → 跑测试 → 读报错 → 修复
+- [x] `wg-harness` CLI 工具箱（支持 `pip install -e .` 一键安装与 `wg-harness mcp-stdio` 挂载）
+- [ ] 09 Plan Mode：先规划后执行，计划审批
+- [ ] 10 接入真实模型（OpenAI / DeepSeek 兼容接口，可切换 Mock）
 - [ ] 11 评测集：用固定任务集回归 Harness 改动
 
 ## 🤝 参与贡献
