@@ -1,0 +1,13 @@
+server:
+  port: ${PORT:8090}
+
+wg:
+  harness:
+    run-mode: ${RUN_MODE:mock}
+    default-policy: workspace-write
+    context-window: 8000
+    compact-ratio: 0.80
+    llm:
+      base-url: ${LLM_BASE_URL:https://api.deepseek.com/v1}
+      api-key: ${LLM_API_KEY:}
+      model: ${LLM_MODEL:deepseek-chat}
