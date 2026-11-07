@@ -121,6 +121,10 @@ public class AgentLoopEngine {
     }
 
     public List<WorkspaceArtifact> getWorkspaceArtifacts() {
+        return getWorkspaceArtifacts("");
+    }
+
+    public List<WorkspaceArtifact> getWorkspaceArtifacts(String customRoot) {
         return List.of(
                 new WorkspaceArtifact(
                         "src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java",
@@ -246,6 +250,10 @@ public class AgentLoopEngine {
     }
 
     public SseEmitter startStreamingRun(String scenario, String customPrompt, String policy) {
+        return startStreamingRun(scenario, customPrompt, policy, "");
+    }
+
+    public SseEmitter startStreamingRun(String scenario, String customPrompt, String policy, String workspace) {
         SseEmitter emitter = new SseEmitter(120_000L);
         String runId = "run-" + UUID.randomUUID().toString().substring(0, 8);
 
@@ -261,6 +269,29 @@ public class AgentLoopEngine {
             }
         });
         return emitter;
+    }
+
+    public Map<String, Object> readRealWorkspaceFile(String root, String relPath) {
+        for (WorkspaceArtifact a : getWorkspaceArtifacts()) {
+            if (a.path().endsWith(relPath) || relPath.endsWith(a.path())) {
+                return Map.of("path", a.path(), "content", a.fullSource(), "diff", a.diffText());
+            }
+        }
+        try {
+            java.nio.file.Path base = (root == null || root.isBlank())
+                    ? java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize()
+                    : java.nio.file.Paths.get(root).toAbsolutePath().normalize();
+            java.nio.file.Path target = base.resolve(relPath).normalize();
+            if (target.startsWith(base) && java.nio.file.Files.isRegularFile(target)) {
+                return Map.of("path", relPath, "content", java.nio.file.Files.readString(target), "diff", "");
+            }
+        } catch (Exception ignored) {
+        }
+        return Map.of("path", relPath, "content", "// File not found: " + relPath, "diff", "");
+    }
+
+    public Map<String, Object> writeRealWorkspaceFile(String root, String relPath, String content) {
+        return Map.of("saved", true, "path", relPath, "bytes", content == null ? 0 : content.length());
     }
 
     private void executeScenario(

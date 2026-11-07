@@ -76,17 +76,36 @@ public class HarnessStudioController {
     }
 
     @GetMapping("/workspace/files")
-    public List<AgentLoopEngine.WorkspaceArtifact> listWorkspaceFiles() {
-        return loopEngine.getWorkspaceArtifacts();
+    public List<AgentLoopEngine.WorkspaceArtifact> listWorkspaceFiles(
+            @RequestParam(defaultValue = "") String root
+    ) {
+        return loopEngine.getWorkspaceArtifacts(root);
+    }
+
+    @GetMapping("/workspace/read")
+    public Map<String, Object> readWorkspaceFile(
+            @RequestParam(defaultValue = "") String root,
+            @RequestParam String path
+    ) {
+        return loopEngine.readRealWorkspaceFile(root, path);
+    }
+
+    @PostMapping("/workspace/write")
+    public Map<String, Object> writeWorkspaceFile(@RequestBody Map<String, Object> body) {
+        String root = String.valueOf(body.getOrDefault("root", ""));
+        String path = String.valueOf(body.getOrDefault("path", ""));
+        String content = String.valueOf(body.getOrDefault("content", ""));
+        return loopEngine.writeRealWorkspaceFile(root, path, content);
     }
 
     @GetMapping(value = "/run/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamAgentRun(
             @RequestParam(defaultValue = "bugfix") String scenario,
             @RequestParam(defaultValue = "") String prompt,
-            @RequestParam(defaultValue = "workspace-write") String policy
+            @RequestParam(defaultValue = "workspace-write") String policy,
+            @RequestParam(defaultValue = "") String workspace
     ) {
-        return loopEngine.startStreamingRun(scenario, prompt, policy);
+        return loopEngine.startStreamingRun(scenario, prompt, policy, workspace);
     }
 
     @PostMapping("/approvals/{approvalId}/decide")
