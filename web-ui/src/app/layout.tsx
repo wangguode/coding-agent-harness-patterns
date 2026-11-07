@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WG CodeX — Coding Agent & Harness Engineering Workbench",
+  title: "Harness Agent — Coding Agent & Harness Patterns",
   description:
     "Production Coding Agent & Harness Workbench with MCP Servers, SKILL.md Registry, Guardrails, Context Compaction, and Mac/Windows support.",
 };

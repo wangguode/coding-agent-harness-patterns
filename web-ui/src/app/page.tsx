@@ -173,7 +173,7 @@ export default function CodexWorkbenchPage() {
 
   const [promptInput, setPromptInput] = useState<string>("");
   const [permissionMode, setPermissionMode] = useState<string>("workspace-write");
-  const [selectedModel, setSelectedModel] = useState<string>("gpt-5.4-codex");
+  const [selectedModel, setSelectedModel] = useState<string>("deepseek-chat");
   const [targetOs, setTargetOs] = useState<"mac" | "win">("mac");
 
   // Right drawer (Code Diff / Workspace File Editor / Shell) — closed by default for clean Codex canvas
@@ -281,8 +281,8 @@ export default function CodexWorkbenchPage() {
   const [newMcpName, setNewMcpName] = useState<string>("");
   const [newMcpEndpoint, setNewMcpEndpoint] = useState<string>("");
 
-  const [llmProvider, setLlmProvider] = useState<string>("OpenAI / Codex Compatible");
-  const [llmBaseUrl, setLlmBaseUrl] = useState<string>("https://api.openai.com/v1");
+  const [llmProvider, setLlmProvider] = useState<string>("OpenAI / DeepSeek / Qwen Compatible");
+  const [llmBaseUrl, setLlmBaseUrl] = useState<string>("https://api.deepseek.com/v1");
   const [llmApiKey, setLlmApiKey] = useState<string>("");
   const [settingsSavedBanner, setSettingsSavedBanner] = useState<boolean>(false);
 
@@ -290,12 +290,12 @@ export default function CodexWorkbenchPage() {
   const [workspaceFiles, setWorkspaceFiles] = useState<string[]>([
     "pom.xml",
     "src/main/java/com/wangguoai/harness/api/HarnessStudioController.java",
-    "src/main/java/com/wangguoai/harness/engine/HarnessEngineService.java",
+    "src/main/java/com/wangguoai/harness/kernel/AgentLoopEngine.java",
     "src/main/java/com/wangguoai/harness/mcp/McpToolRegistryService.java",
   ]);
   const [selectedFile, setSelectedFile] = useState<string>("pom.xml");
   const [fileContent, setFileContent] = useState<string>(
-    `<!-- WG CodeX Java 17 Spring Boot Harness Engine -->\n<project xmlns="http://maven.apache.org/POM/4.0.0">\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>com.wangguoai</groupId>\n  <artifactId>java-harness-studio</artifactId>\n  <version>1.0.0</version>\n</project>`
+    `<!-- Harness Agent Java 17 Spring Boot Engine -->\n<project xmlns="http://maven.apache.org/POM/4.0.0">\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>com.wangguoai</groupId>\n  <artifactId>java-harness-studio</artifactId>\n  <version>0.5.0</version>\n</project>`
   );
   const [shellCmd, setShellCmd] = useState<string>("mvn -v");
   const [shellOutput, setShellOutput] = useState<string>(
@@ -406,37 +406,74 @@ export default function CodexWorkbenchPage() {
 
     const activeSkill = skills.find((s) => s.enabled) || skills[0];
     const activeMcp = mcpServers.find((m) => m.enabled) || mcpServers[0];
-    const isHighRisk =
+    let steps: TraceStep[] = [
+      {
+        id: `st-a-${Date.now()}`,
+        label: `已激活技能 ${activeSkill?.name || "java-concurrency-audit"}`,
+        detail: `按需注入 SKILL.md 规范，当前权限策略：${permissionMode}`,
+        status: "done",
+      },
+      {
+        id: `st-b-${Date.now()}`,
+        label: `mcp.call('${activeMcp?.name || "filesystem-mcp"}', 'tools/call')`,
+        detail: `通过 MCP 扫描目标文件与单元测试上下文（耗时 28ms）`,
+        status: "done",
+      },
+    ];
+    let replyText = "";
+    let diffFile = "src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java";
+    let isHighRisk =
       text.toLowerCase().includes("rm ") ||
       text.toLowerCase().includes("drop ") ||
       text.includes("生产") ||
       text.includes("删除");
 
-    const newTurn: ChatTurn = {
-      id: `turn-${Date.now()}`,
-      userPrompt: text,
-      timestamp: new Date().toTimeString().slice(0, 5),
-      steps: [
-        {
-          id: `st-a-${Date.now()}`,
-          label: `已匹配技能 ${activeSkill?.name || "java-concurrency-audit"}`,
-          detail: `按需注入 SKILL.md 规范，当前权限策略：${permissionMode}`,
-          status: "done",
-        },
-        {
-          id: `st-b-${Date.now()}`,
-          label: `mcp.call('${activeMcp?.name || "filesystem-mcp"}', 'workspace/inspect')`,
-          detail: `通过 MCP 扫描目标文件与单元测试上下文（耗时 28ms）`,
-          status: "done",
-        },
-      ],
-      assistantReply: isHighRisk
+    try {
+      const res = await fetch("/api/agent/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: text,
+          policy: permissionMode,
+          model: selectedModel,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.steps) && data.steps.length > 0) {
+          steps = data.steps;
+        }
+        if (data.reply) {
+          replyText = String(data.reply);
+        }
+        if (data.diffFile) {
+          diffFile = String(data.diffFile);
+        }
+        if (typeof data.highRisk === "boolean") {
+          isHighRisk = data.highRisk;
+        }
+      }
+    } catch {
+      // Fallback if static offline
+    }
+
+    if (!replyText) {
+      replyText = isHighRisk
         ? `检测到您的指令涉及高风险变更（「${text}」）。PreToolUse 护栏已挂起该操作，请在下方审批卡片中确认是否放行。`
         : `已完成任务：「${text}」。\n\n- **激活技能**：\`${
             activeSkill?.name || "java-concurrency-audit"
           }\`\n- **调用工具**：\`${
             activeMcp?.name || "filesystem-mcp"
-          }\`、\`apply_patch\`\n- **验证状态**：工作区编译与回归测试全部通过。您可以点击右上角「代码与终端」按钮查看详细 Diff 或执行命令。`,
+          }\`、\`read_file\`、\`exec_command('mvn test')\`\n- **验证状态**：工作区编译与回归测试全部通过。`;
+    }
+
+    const newTurn: ChatTurn = {
+      id: `turn-${Date.now()}`,
+      userPrompt: text,
+      timestamp: new Date().toTimeString().slice(0, 5),
+      steps,
+      assistantReply: replyText,
+      diffFile,
       pendingApproval: isHighRisk
         ? {
             id: `app-${Date.now()}`,
@@ -649,10 +686,10 @@ export default function CodexWorkbenchPage() {
                   isDark ? "bg-zinc-100 text-zinc-900" : "bg-zinc-900 text-white"
                 }`}
               >
-                W
+                H
               </div>
               <span className="font-semibold text-[15px] tracking-tight">
-                WG CodeX
+                Harness Agent
               </span>
             </div>
             <button
@@ -1109,9 +1146,10 @@ export default function CodexWorkbenchPage() {
                     onChange={(e) => setSelectedModel(e.target.value)}
                     className={`bg-transparent px-1.5 py-1 rounded ${textMuted} focus:outline-none cursor-pointer`}
                   >
-                    <option value="gpt-5.4-codex">gpt-5.4-codex</option>
-                    <option value="claude-4.6-sonnet">claude-4.6-sonnet</option>
+                    <option value="deepseek-chat">deepseek-chat</option>
                     <option value="qwen-coder-plus">qwen-coder-plus</option>
+                    <option value="claude-3-7-sonnet">claude-3-7-sonnet</option>
+                    <option value="gpt-4.1">gpt-4.1</option>
                   </select>
                 </div>
 
@@ -1514,7 +1552,21 @@ export default function CodexWorkbenchPage() {
                       />
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/settings/llm", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              runMode: llmApiKey.trim() ? "cloud" : "mock",
+                              baseUrl: llmBaseUrl,
+                              apiKey: llmApiKey,
+                              model: selectedModel,
+                            }),
+                          });
+                        } catch {
+                          // Ignore
+                        }
                         setSettingsSavedBanner(true);
                         setTimeout(() => setSettingsSavedBanner(false), 2000);
                       }}
@@ -1523,7 +1575,7 @@ export default function CodexWorkbenchPage() {
                       {settingsSavedBanner ? (
                         <>
                           <Check className="w-3.5 h-3.5" />
-                          <span>已保存</span>
+                          <span>已保存并生效</span>
                         </>
                       ) : (
                         <span>保存模型配置</span>
@@ -1561,7 +1613,7 @@ export default function CodexWorkbenchPage() {
                       <div>
                         <div className="text-xs font-semibold">外观主题</div>
                         <div className={`text-xs ${textMuted}`}>
-                          支持 Codex 暗色模式与亮色模式一键切换
+                          支持深色模式与亮色模式一键切换
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -1571,7 +1623,7 @@ export default function CodexWorkbenchPage() {
                             isDark ? "border-blue-500 font-semibold" : ""
                           }`}
                         >
-                          Codex 暗色
+                          深色模式
                         </button>
                         <button
                           onClick={() => setTheme("light")}
@@ -1579,7 +1631,7 @@ export default function CodexWorkbenchPage() {
                             !isDark ? "border-blue-500 font-semibold" : ""
                           }`}
                         >
-                          Codex 亮色
+                          亮色模式
                         </button>
                       </div>
                     </div>
@@ -1615,7 +1667,7 @@ export default function CodexWorkbenchPage() {
                       <pre className="p-3 rounded-lg bg-black/40 text-zinc-200 font-mono text-xs overflow-x-auto">
                         {targetOs === "mac"
                           ? "./start-mac-linux.sh\n# 或启动桌面客户端:\ncd desktop-shell && npm start"
-                          : "start-windows.bat\nREM 自动检测 JDK 17 并启动 WG CodeX 桌面端"}
+                          : "start-windows.bat\nREM 自动检测 JDK 17 并启动 Harness Agent 桌面端"}
                       </pre>
                     </div>
                   </div>

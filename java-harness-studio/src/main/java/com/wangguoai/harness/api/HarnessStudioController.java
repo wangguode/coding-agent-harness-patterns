@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * WG CodeX Studio REST & SSE 统一控制面接口（支持 Tools/MCP/Skills 动态增删改查与 Mac/Windows 跨平台终端）
+ * Harness Agent REST & SSE 统一控制面接口（支持 Tools/MCP/Skills 动态增删改查、模型问答与 Mac/Windows 跨平台终端）
  */
 @RestController
 @RequestMapping("/api")
@@ -51,7 +51,7 @@ public class HarnessStudioController {
     @GetMapping("/overview")
     public Map<String, Object> overview() {
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("application", "wg-codex-studio");
+        out.put("application", "harness-agent");
         out.put("version", "0.5.0");
         out.put("javaVersion", System.getProperty("java.version"));
         out.put("osName", System.getProperty("os.name"));
@@ -114,6 +114,14 @@ public class HarnessStudioController {
             @RequestParam(defaultValue = "") String workspace
     ) {
         return loopEngine.startStreamingRun(scenario, prompt, policy, workspace);
+    }
+
+    @PostMapping("/agent/chat")
+    public Map<String, Object> agentChat(@RequestBody Map<String, Object> body) {
+        String prompt = String.valueOf(body.getOrDefault("prompt", "")).trim();
+        String policy = String.valueOf(body.getOrDefault("policy", "workspace-write")).trim();
+        String model = String.valueOf(body.getOrDefault("model", "")).trim();
+        return loopEngine.runInteractiveAgentTurn(prompt, policy, model);
     }
 
     @PostMapping("/approvals/{approvalId}/decide")
