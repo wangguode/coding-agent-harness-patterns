@@ -1,278 +1,469 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" data-view="showcase">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WG Codex Studio — 编码智能体与 Harness 全栈工作台</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WG Antigravity · Harness Studio — Next-Gen Coding Agent IDE &amp; Harness Platform</title>
+  
+  
+  
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="workspace-shell">
-    <!-- 左侧栏：Gemini / Codex 风格会话与技能导航 -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-            <path d="M12 2C12.8 7.2 16.8 11.2 22 12C16.8 12.8 12.8 16.8 12 22C11.2 16.8 7.2 12.8 2 12C7.2 11.2 11.2 7.2 12 2Z" fill="url(#gStar)"/>
+  <!-- 背景极光流光层（Google Antigravity 4 色星云低透明度氛围层） -->
+  <div class="agy-ambient-aurora" aria-hidden="true">
+    <div class="orb orb-blue"></div>
+    <div class="orb orb-red"></div>
+    <div class="orb orb-amber"></div>
+    <div class="orb orb-green"></div>
+    <div class="grid-mesh"></div>
+  </div>
+
+  <!-- 1. 顶部 Google Antigravity / Cursor 旗舰级毛玻璃导航栏 -->
+  <header class="agy-site-header">
+    <div class="header-inner">
+      <div class="brand-cluster">
+        <a href="#" class="agy-logo-link" title="WG Antigravity · Harness Studio">
+          <!-- Google Antigravity 4色星云流体 A 字徽标 -->
+          <svg class="agy-mark-svg" viewBox="0 0 210 200" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="gStar" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#2563EB"/>
-                <stop offset="1" stop-color="#7C3AED"/>
+              <linearGradient id="agy-grad-main" x1="15" y1="20" x2="190" y2="185" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#3186FF"/>
+                <stop offset="38%" stop-color="#FC413D"/>
+                <stop offset="72%" stop-color="#FBBC04"/>
+                <stop offset="100%" stop-color="#00B95C"/>
               </linearGradient>
             </defs>
+            <path d="M175.277 181.636C185.19 189.071 200.06 184.115 186.429 170.484C145.536 130.83 154.211 21.7824 103.404 21.7824C52.5979 21.7824 61.2722 130.83 20.3793 170.484C5.50915 185.354 21.6185 189.071 31.5319 181.636C69.9464 155.614 67.4681 109.764 103.404 109.764C139.34 109.764 136.862 155.614 175.277 181.636Z" fill="url(#agy-grad-main)"/>
           </svg>
-        </div>
-        <div class="brand-titles">
-          <span class="brand-name">WG Codex Studio</span>
-          <span class="brand-sub">Harness Engineering v2.0</span>
-        </div>
+          <span class="brand-wordmark">Antigravity</span>
+          <span class="brand-divider">/</span>
+          <span class="brand-sub">Harness Studio</span>
+        </a>
+        <span class="version-pill">Java 17 · Spring Boot 3.3</span>
       </div>
 
-      <button class="new-chat-btn" id="btn-new-session" type="button">
-        <svg viewBox="0 0 20 20" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-          <line x1="10" y1="4" x2="10" y2="16"/><line x1="4" y1="10" x2="16" y2="10"/>
-        </svg>
-        <span>新建编码智能体任务</span>
-      </button>
+      <nav class="site-nav" aria-label="主导航">
+        <button class="nav-link active" data-focus-pane="editor" type="button">Agent IDE</button>
+        <button class="nav-link" data-open-drawer="tab-compact" type="button">Context /compact</button>
+        <button class="nav-link" data-open-drawer="tab-mcp" type="button">MCP JSON-RPC</button>
+        <button class="nav-link" data-open-drawer="tab-hooks" type="button">Hooks Guardrails</button>
+        <button class="nav-link" data-open-drawer="tab-memory" type="button">Decay Memory</button>
+      </nav>
 
-      <div class="sidebar-section">
-        <div class="sidebar-heading">任务会话 (Agent Sessions)</div>
-        <div class="session-list" id="session-list">
-          <button class="session-item active" data-scenario="bugfix" type="button">
-            <span class="session-dot pass"></span>
-            <div class="session-meta">
-              <div class="session-title">修复滑窗限流器并发边界 Bug</div>
-              <div class="session-desc">SlidingWindowLimiter · 2轮单测自修复</div>
-            </div>
-          </button>
-          <button class="session-item" data-scenario="hitl" type="button">
-            <span class="session-dot ask"></span>
-            <div class="session-meta">
-              <div class="session-title">生产 K8s 网关滚动发布审批</div>
-              <div class="session-desc">kubectl apply · HITL 人工挂起确认</div>
-            </div>
-          </button>
-          <button class="session-item" data-scenario="security" type="button">
-            <span class="session-dot deny"></span>
-            <div class="session-meta">
-              <div class="session-title">高危强推拦截与环境变量脱敏</div>
-              <div class="session-desc">PreToolUse 阻断 · sk-* 自动掩码</div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-heading">渐进式 Skills &amp; MCP 挂载</div>
-        <div class="skill-chip-list" id="sidebar-skills"></div>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="engine-status">
+      <div class="header-actions">
+        <div class="live-telemetry-pill" title="实时上下文水位与运行引擎状态">
           <span class="status-dot"></span>
-          <span id="mode-badge">local-harness · deepseek-chat</span>
+          <span id="mode-badge">DETERMINISTIC_REPLAY (READY)</span>
+          <span class="sep">·</span>
+          <span id="topbar-token-val" class="mono-num">486 / 1,420 tok (-65.8%)</span>
         </div>
-        <button class="settings-btn" id="btn-open-settings" type="button">
-          <svg viewBox="0 0 20 20" width="15" height="15" stroke="currentColor" stroke-width="1.7" fill="none">
-            <circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4"/>
-          </svg>
-          <span>模型与 API Key 设置</span>
+
+        <button id="btn-view-toggle" class="hdr-btn" type="button" title="切换官网展台模式与全屏沉浸 IDE 模式">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>
+          <span id="view-toggle-label">全屏 IDE</span>
+        </button>
+
+        <button id="btn-theme-toggle" class="hdr-btn" type="button" title="切换 Obsidian 暗黑 / Apple 纯净亮色">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <span id="theme-toggle-label">亮色模式</span>
+        </button>
+
+        <button id="btn-open-settings" class="hdr-btn primary-cta" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+          <span>配置 LLM API Key</span>
         </button>
       </div>
-    </aside>
+    </div>
+  </header>
 
-    <!-- 中央主舞台：Gemini / Codex 对话流 + 底部大圆角 Composer -->
-    <main class="chat-stage">
-      <header class="stage-topbar">
-        <div class="topbar-left">
-          <div class="policy-segmented" role="group" aria-label="沙箱审批策略">
-            <button class="seg-btn active" data-policy="workspace-write" type="button">workspace-write</button>
-            <button class="seg-btn" data-policy="read-only" type="button">read-only</button>
-            <button class="seg-btn" data-policy="full-access" type="button">full-access</button>
-          </div>
+  <!-- 2. 极简官网标题区（克制留白，一眼聚焦下方 IDE 主窗口） -->
+  <section class="agy-hero-banner" id="hero-banner">
+    <div class="hero-content">
+      <div class="hero-minimal-row">
+        <div>
+          <h1 class="hero-headline">
+            Experience liftoff with the <span class="gradient-text">agent-first</span> engineering harness.
+          </h1>
+          <p class="hero-subhead">
+            集成两级 <code>/compact</code> 脱水、渐进式 Skills、Pre/Post-Tool 护栏、MCP JSON-RPC 2.0 与 JUnit 5 自验证闭环。
+          </p>
         </div>
-        <div class="topbar-right">
-          <div class="token-meter" title="当前上下文窗口水位">
-            <span class="token-label">Context</span>
-            <strong id="topbar-token-val">410 / 2,840 tok (-85.6%)</strong>
-          </div>
-          <button class="topbar-btn" id="btn-quick-compact" type="button">/compact 压缩</button>
-          <button class="topbar-btn" id="btn-theme-toggle" type="button">暗色模式</button>
+        <div class="announcement-pill">
+          <span class="sparkle-dot"></span>
+          <span>6 Core Harness Loops · Ready to Run</span>
         </div>
-      </header>
+      </div>
+    </div>
+  </section>
 
-      <!-- 对话与推理轨迹主滚动区 -->
-      <section class="chat-stream" id="chat-stream" aria-live="polite"></section>
-
-      <!-- 底部 Gemini / Codex 风格悬浮胶囊输入台 -->
-      <footer class="composer-dock">
-        <div class="scenario-pills">
-          <button class="quick-pill" data-run="bugfix" type="button">运行：单测报错驱动自修复闭环</button>
-          <button class="quick-pill" data-run="hitl" type="button">运行：K8s 变更 HITL 人工挂起审批</button>
-          <button class="quick-pill" data-run="security" type="button">运行：高危命令拦截与密钥脱敏</button>
+  <!-- 3. 核心：1:1 复刻 Antigravity IDE / Cursor Desktop 仿真桌面窗口外壳 -->
+  <main class="agy-ide-stage">
+    <div class="ide-window-frame">
+      <!-- 3.1 macOS 原生窗口标题栏 + 命令面板搜索条 -->
+      <div class="ide-titlebar">
+        <div class="window-traffic-lights" aria-hidden="true">
+          <span class="tl tl-close"></span>
+          <span class="tl tl-min"></span>
+          <span class="tl tl-max"></span>
         </div>
-        <div class="composer-box">
-          <textarea
-            id="prompt-input"
-            rows="2"
-            placeholder="输入任意编码任务、架构问题或 Shell 指令（如：修复 SlidingWindowLimiter 边界 Bug 并跑单元测试，或输入 kubectl apply 触发人工审批）..."
-          ></textarea>
-          <div class="composer-toolbar">
-            <div class="composer-tools-left">
-              <span class="tool-tag">MCP Stdio Ready</span>
-              <span class="tool-tag">PreToolUse Guard Active</span>
-              <span class="tool-tag" id="active-policy-tag">Policy: workspace-write</span>
+
+        <div class="ide-command-center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span>wg-coding-agent-harness — SlidingWindowLimiter.java</span>
+          <kbd>⌘K</kbd>
+        </div>
+
+        <div class="ide-titlebar-right">
+          <span id="active-policy-tag" class="ide-policy-badge">Policy: workspace-write</span>
+          <button id="btn-quick-compact" class="ide-mini-btn" type="button" title="立即执行两级 /compact 上下文脱水">
+            <span>⚡ /compact</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3.2 IDE 主体四栏网格：Activity Bar (44px) | Explorer & Sessions (236px) | Code & Diff + Terminal (1fr) | Antigravity Agent Chat (430px) -->
+      <div class="ide-workbench">
+        <!-- A. 极窄 Activity Rail -->
+        <aside class="ide-activity-rail" aria-label="IDE 活动栏">
+          <button class="rail-icon active" title="Workspace Explorer &amp; Agent Tasks" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2Z"/></svg>
+          </button>
+          <button class="rail-icon" id="rail-btn-diff" title="Git Working Tree Diff" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M6 9v12"/></svg>
+          </button>
+          <button class="rail-icon" id="rail-btn-mcp" title="MCP Tool Registry" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </button>
+          <button class="rail-icon" id="rail-btn-shield" title="Pre/Post-Tool Hooks Guardrails" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </button>
+          <div class="rail-spacer"></div>
+          <a class="rail-icon" href="https://github.com/wangguode/coding-agent-harness-patterns" target="_blank" rel="noopener" title="GitHub Repository">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+          </a>
+        </aside>
+
+        <!-- B. 左侧 Explorer：Agent 任务流 + 工作区文件树 + 渐进式 Skills -->
+        <aside class="ide-sidebar">
+          <div class="sidebar-group">
+            <div class="sidebar-hdr">
+              <span>AGENT WORKFLOWS</span>
+              <button id="btn-new-session" class="sidebar-action-btn" type="button">+ New</button>
             </div>
-            <div class="composer-tools-right">
-              <button class="send-btn" id="btn-send-prompt" type="button" aria-label="发送任务">
-                <span>执行任务</span>
-                <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 10h12M11 5l5 5-5 5"/>
-                </svg>
+            <div class="session-list">
+              <button class="session-item active" data-scenario="bugfix" type="button">
+                <span class="s-icon emerald">●</span>
+                <div class="s-body">
+                  <div class="s-title">修复 SlidingWindowLimiter</div>
+                  <div class="s-meta">6 steps · JUnit 6/6 Pass</div>
+                </div>
+              </button>
+              <button class="session-item" data-scenario="hitl" type="button">
+                <span class="s-icon amber">●</span>
+                <div class="s-body">
+                  <div class="s-title">K8s 生产集群发布审批</div>
+                  <div class="s-meta">HITL 挂起等待人工授权</div>
+                </div>
+              </button>
+              <button class="session-item" data-scenario="security" type="button">
+                <span class="s-icon rose">●</span>
+                <div class="s-body">
+                  <div class="s-title">高危命令阻断与脱敏审计</div>
+                  <div class="s-meta">PreToolUse 拦截 + Redact</div>
+                </div>
               </button>
             </div>
           </div>
-        </div>
-      </footer>
-    </main>
 
-    <!-- 右侧抽屉：Codex Artifacts / Diff / Compact / MCP / 审计与记忆 -->
-    <aside class="inspector-drawer">
-      <div class="drawer-tabs" role="tablist">
-        <button class="drawer-tab active" data-tab="tab-diff" role="tab" type="button">代码 Diff (3)</button>
-        <button class="drawer-tab" data-tab="tab-compact" role="tab" type="button">/compact 压缩</button>
-        <button class="drawer-tab" data-tab="tab-mcp" role="tab" type="button">MCP 沙箱</button>
-        <button class="drawer-tab" data-tab="tab-audit" role="tab" type="button">护栏与记忆</button>
+          <div class="sidebar-group">
+            <div class="sidebar-hdr">
+              <span>WORKSPACE CHANGES</span>
+              <span class="badge-mini">3 files</span>
+            </div>
+            <div id="sidebar-file-tree" class="file-tree-list"></div>
+          </div>
+
+          <div class="sidebar-group grow">
+            <div class="sidebar-hdr">
+              <span>PROGRESSIVE SKILLS</span>
+              <span class="badge-mini">Lazy Load</span>
+            </div>
+            <div id="sidebar-skills" class="skills-tree-list"></div>
+          </div>
+        </aside>
+
+        <!-- C. 中央主编辑区：上方 Multi-Tab Code & Inline Diff Editor + 下方 Integrated Harness Console -->
+        <section class="ide-center-stage">
+          <!-- C1. 代码与行内 Diff 编辑器顶栏 -->
+          <div class="editor-tabbar">
+            <div id="artifact-file-tabs" class="editor-tabs"></div>
+            <div class="editor-actions">
+              <div id="artifact-meta-bar" class="diff-stat-pill"></div>
+              <button id="btn-accept-patch" class="editor-btn accept" type="button" title="接受当前 Agent 补丁">
+                <span>✓ Accept</span>
+                <kbd>⌘Y</kbd>
+              </button>
+              <button id="btn-copy-diff" class="editor-btn" type="button">复制源码</button>
+            </div>
+          </div>
+
+          <!-- 面包屑路径栏 -->
+          <div class="editor-breadcrumbs">
+            <span class="crumb-repo">coding-agent-harness-patterns</span>
+            <span class="crumb-sep">›</span>
+            <span id="editor-breadcrumb-path" class="crumb-path">src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java</span>
+            <span class="crumb-tag">Unified Git Diff · Verified by JUnit 5</span>
+          </div>
+
+          <!-- 代码行号 + 语法着色 Diff 视图 -->
+          <div id="diff-viewer" class="code-diff-surface" role="region" aria-label="代码变更对比视图"></div>
+
+          <!-- C2. 下方折叠式 Integrated Harness Console（4个专业工程面板 Tab） -->
+          <div class="ide-bottom-panel">
+            <div class="bottom-panel-tabs">
+              <button class="drawer-tab active" data-tab="tab-compact" type="button">
+                <span class="tab-dot blue"></span>
+                <span>Context /compact 压缩器</span>
+              </button>
+              <button class="drawer-tab" data-tab="tab-mcp" type="button">
+                <span class="tab-dot emerald"></span>
+                <span>MCP JSON-RPC 2.0 控制台</span>
+              </button>
+              <button class="drawer-tab" data-tab="tab-hooks" type="button">
+                <span class="tab-dot amber"></span>
+                <span>Hooks 护栏 &amp; 审计账本</span>
+              </button>
+              <button class="drawer-tab" data-tab="tab-memory" type="button">
+                <span class="tab-dot purple"></span>
+                <span>14d 半衰期记忆库</span>
+              </button>
+            </div>
+
+            <div class="bottom-panel-body">
+              <!-- Pane 1: /compact 两级压缩 -->
+              <div id="tab-compact" class="drawer-pane active">
+                <div class="console-split">
+                  <div class="console-col-metrics">
+                    <div class="console-head-row">
+                      <span class="console-title">Two-Tier Context Compaction (Micro-compact + Structured Summary)</span>
+                      <button id="btn-run-compact" class="console-action-btn" type="button">执行 /compact 压缩</button>
+                    </div>
+                    <div class="compact-kpi-row">
+                      <div class="kpi-box">
+                        <span class="k-lbl">压缩前历史上下文</span>
+                        <strong id="cmp-before" class="k-val">1,420</strong>
+                        <span class="k-unit">tokens</span>
+                      </div>
+                      <div class="kpi-box">
+                        <span class="k-lbl">压缩后活跃窗口</span>
+                        <strong id="cmp-after" class="k-val accent-emerald">486</strong>
+                        <span class="k-unit">tokens</span>
+                      </div>
+                      <div class="kpi-box">
+                        <span class="k-lbl">净节省窗口开销</span>
+                        <strong id="cmp-ratio" class="k-val accent-blue">65.8%</strong>
+                        <span class="k-unit">saved</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="console-col-code">
+                    <div class="code-box-label">结构化 Checkpoint 摘要输出（保留架构决策、已改文件与待办验证）</div>
+                    <pre id="cmp-checkpoint" class="terminal-pre">[Checkpoint #01 · Two-Tier Context Compaction]
+• 已归档原始工具日志：折叠 18 轮历史 read_file / grep_search 原始长输出 (-934 tokens)
+• 架构与根因决策：定位 SlidingWindowLimiter.java 时间窗口过滤方向写反，且未拦截 limit<=0 与未来时钟漂移
+• 活跃修改文件：src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java (+14 -5)
+• 验证闭环状态：JUnit 5 SlidingWindowLimiterTest (6/6 Passed, 48ms)</pre>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pane 2: MCP JSON-RPC 2.0 -->
+              <div id="tab-mcp" class="drawer-pane">
+                <div class="console-split">
+                  <div class="console-col-metrics">
+                    <div class="console-head-row">
+                      <span class="console-title">MCP JSON-RPC 2.0 Server Sandbox</span>
+                    </div>
+                    <div class="inline-form-row">
+                      <select id="mcp-method-select" class="ide-select" aria-label="选择 MCP JSON-RPC 方法">
+                        <option value="tools/list">tools/list — 枚举已注册工具与 JSON Schema</option>
+                        <option value="tools/call:verify">tools/call — run_unit_test (SlidingWindowLimiterTest)</option>
+                        <option value="tools/call:search">tools/call — search_codebase (barge_in)</option>
+                      </select>
+                      <button id="btn-send-mcp" class="console-action-btn" type="button">发送 RPC</button>
+                    </div>
+                    <p class="console-hint">所有工具调用均经过 JSON Schema 参数校验与沙箱超时隔离。</p>
+                  </div>
+                  <div class="console-col-code">
+                    <div class="code-box-label">JSON-RPC 2.0 Wire Response</div>
+                    <pre id="mcp-response" class="terminal-pre"></pre>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pane 3: Hooks 护栏与审计账本 -->
+              <div id="tab-hooks" class="drawer-pane">
+                <div class="console-split">
+                  <div class="console-col-metrics">
+                    <div class="console-head-row">
+                      <span class="console-title">PreToolUse 拦截器 &amp; PostToolUse 密钥脱敏实测</span>
+                      <button id="btn-eval-hook" class="console-action-btn" type="button">裁决并脱敏</button>
+                    </div>
+                    <div class="hook-inputs-grid">
+                      <input id="hook-cmd-input" class="ide-input" type="text" value="kubectl apply -f prod-voice-gateway.yaml" aria-label="测试工具命令" />
+                      <input id="hook-out-input" class="ide-input" type="text" value="OPENAI_API_KEY=sk-demoMockKey0199887766554433221100" aria-label="测试工具输出" />
+                    </div>
+                    <pre id="hook-eval-result" class="terminal-pre compact-pre"></pre>
+                  </div>
+                  <div class="console-col-code">
+                    <div class="code-box-label">实时安全审计账本 (Tool Audit Ledger)</div>
+                    <div id="audit-list" class="audit-scroll-list"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pane 4: 14 天半衰期记忆库 -->
+              <div id="tab-memory" class="drawer-pane">
+                <div class="console-split">
+                  <div class="console-col-metrics">
+                    <div class="console-head-row">
+                      <span class="console-title">跨会话半衰期记忆检索 (\(\tau = 14\text{d}\) 指数时间衰减)</span>
+                      <button id="btn-recall-mem" class="console-action-btn" type="button">检索 Top-K</button>
+                    </div>
+                    <input id="mem-query-input" class="ide-input" type="text" value="limiter window clock" aria-label="记忆检索关键词" />
+                    <p class="console-hint">综合词项重合度、重要度星级与 14 天指数半衰期权重排序召回。</p>
+                  </div>
+                  <div class="console-col-code">
+                    <div class="code-box-label">Top-K 召回记忆条目</div>
+                    <div id="memory-list" class="audit-scroll-list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+          <!-- D. 右侧：1:1 复刻 Google Antigravity / Cursor Agent 聊天与推理控制台 -->
+        <aside class="agy-agent-pane" aria-label="Antigravity Agent 聊天窗口">
+          <!-- Agent 窗口顶栏（内收 Sandbox 策略胶囊与模式切换） -->
+          <div class="agent-pane-header">
+            <div class="agent-pane-title">
+              <span class="agy-sparkle-icon" aria-hidden="true">✦</span>
+              <span>Antigravity Agent</span>
+            </div>
+            <div class="policy-seg-group" role="group" aria-label="沙箱执行策略">
+              <button class="seg-btn" data-policy="read-only" type="button">RO</button>
+              <button class="seg-btn active" data-policy="workspace-write" type="button">RW</button>
+              <button class="seg-btn" data-policy="full-access" type="button">Full</button>
+            </div>
+            <div class="agent-mode-pills" role="tablist" aria-label="Agent 模式">
+              <button class="mode-pill active" data-agent-mode="Agent" type="button">Agent</button>
+              <button class="mode-pill" data-agent-mode="Plan" type="button">Plan</button>
+              <button class="mode-pill" data-agent-mode="Ask" type="button">Ask</button>
+            </div>
+          </div>
+
+          <!-- 3 个简洁场景切换条 -->
+          <div class="agent-quick-scenarios">
+            <button class="quick-pill active" data-run="bugfix" type="button">
+              <span class="pill-indicator emerald"></span>
+              <span>限流器修复</span>
+            </button>
+            <button class="quick-pill" data-run="hitl" type="button">
+              <span class="pill-indicator amber"></span>
+              <span>K8s 审批 (HITL)</span>
+            </button>
+            <button class="quick-pill" data-run="security" type="button">
+              <span class="pill-indicator rose"></span>
+              <span>护栏拦截</span>
+            </button>
+          </div>
+
+          <!-- Agent 实时流式轨迹流（包含 User Prompt、Thought 折叠胶囊、Tool Call 卡片、JUnit 自验证块、HITL 审批器） -->
+          <div id="chat-stream" class="agent-chat-stream" role="log" aria-live="polite"></div>
+
+          <!-- 底部：1:1 复刻 Cursor / Antigravity 悬浮双层发光 Composer -->
+          <div class="agy-composer-shell">
+            <!-- 上层挂载 Context 芯片栏 -->
+            <div class="composer-context-bar">
+              <span class="ctx-chip">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+                <span>@SlidingWindowLimiter.java</span>
+              </span>
+              <span class="ctx-chip skill">
+                <span>⚡ @java-concurrency-audit</span>
+              </span>
+              <span class="ctx-chip muted">+ Add Context</span>
+            </div>
+
+            <!-- 中层输入框 -->
+            <textarea
+              id="prompt-input"
+              class="composer-textarea"
+              rows="2"
+              placeholder="Plan, search, build anything... (/ for commands · @ for files)"
+              aria-label="向 Coding Agent 发送工程指令"
+            ></textarea>
+
+            <!-- 下层控制栏（仿 Cursor 官网：左侧 ∞ Agent 胶囊 + 模型选择器，右侧圆形上箭头发送按钮） -->
+            <div class="composer-footer-bar">
+              <div class="composer-left-controls">
+                <button class="composer-badge-btn agent-infinity" type="button" title="Autonomous Agent Mode">
+                  <svg width="15" height="9" viewBox="0 0 25 12" fill="currentColor"><path d="M0 5.67C0 9.12 2.13 11.34 5.31 11.34c1.68 0 3.1-.7 4.63-2.17l2.28-2.21 2.29 2.21c1.52 1.47 2.95 2.17 4.63 2.17 3.18 0 5.31-2.22 5.31-5.67C24.45 2.23 22.31 0 19.14 0c-1.68 0-3.11.7-4.63 2.17L12.22 4.38 9.94 2.17C8.41.7 6.98 0 5.31 0 2.13 0 0 2.23 0 5.67Zm1.91 0c0-2.31 1.37-3.76 3.4-3.76 1.14 0 2.14.54 3.29 1.62l2.29 2.14-2.29 2.14c-1.15 1.08-2.15 1.62-3.29 1.62-2.03 0-3.4-1.45-3.4-3.76Zm11.65 0 2.28-2.14c1.15-1.08 2.16-1.62 3.3-1.62 2.02 0 3.39 1.45 3.39 3.76 0 2.31-1.37 3.76-3.39 3.76-1.14 0-2.15-.54-3.3-1.62l-2.28-2.14Z"/></svg>
+                  <span id="composer-mode-text">Agent</span>
+                </button>
+
+                <button id="btn-model-trigger" class="composer-badge-btn model-picker" type="button" title="点击配置或切换推理大模型">
+                  <span id="composer-model-label">DeepSeek-V3 / Claude 4.6</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              </div>
+
+              <div class="composer-right-controls">
+                <span class="composer-shortcut-hint">⏎ Run</span>
+                <button id="btn-send-prompt" class="composer-send-circle" type="button" aria-label="发送并启动 Agent Loop">
+                  <svg width="13" height="13" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
+    </div>
+  </main>
 
-      <!-- Tab 1: 代码与 Diff Artifacts -->
-      <div class="drawer-pane active" id="tab-diff">
-        <div class="pane-header">
-          <div>
-            <h2>Workspace Artifacts &amp; Git Diff</h2>
-            <p>Agent 修改并经由 JUnit 验证的代码补丁实时预览</p>
-          </div>
-          <button class="mini-btn" id="btn-copy-diff" type="button">复制补丁</button>
-        </div>
-        <div class="file-tabs" id="artifact-file-tabs"></div>
-        <div class="artifact-status-bar" id="artifact-meta-bar"></div>
-        <div class="diff-viewer" id="diff-viewer"></div>
-      </div>
-
-      <!-- Tab 2: /compact 两级上下文压缩 -->
-      <div class="drawer-pane" id="tab-compact">
-        <div class="pane-header">
-          <div>
-            <h2>两级上下文压缩 (/compact)</h2>
-            <p>第一级裁剪陈旧工具大输出 · 第二级提炼结构化 Checkpoint</p>
-          </div>
-          <button class="mini-btn primary" id="btn-run-compact" type="button">重新执行压缩</button>
-        </div>
-        <div class="compact-metrics">
-          <div class="metric-box">
-            <span class="m-label">压缩前 Tokens</span>
-            <strong class="m-val" id="cmp-before">2,840</strong>
-          </div>
-          <div class="metric-box">
-            <span class="m-label">压缩后 Tokens</span>
-            <strong class="m-val accent" id="cmp-after">410</strong>
-          </div>
-          <div class="metric-box">
-            <span class="m-label">节省比例</span>
-            <strong class="m-val success" id="cmp-ratio">85.6%</strong>
-          </div>
-        </div>
-        <div class="sub-label">结构化 Checkpoint 摘要（保留架构决策与修改文件清单）</div>
-        <pre class="code-panel" id="cmp-checkpoint"></pre>
-      </div>
-
-      <!-- Tab 3: MCP JSON-RPC 2.0 调试沙箱 -->
-      <div class="drawer-pane" id="tab-mcp">
-        <div class="pane-header">
-          <div>
-            <h2>MCP JSON-RPC 2.0 Server 沙箱</h2>
-            <p>可直接挂载至 Claude Code / Cursor 的标准工具协议测试</p>
-          </div>
-        </div>
-        <div class="mcp-controls">
-          <select id="mcp-method-select">
-            <option value="tools/call:verify">tools/call · run_unit_test (执行单测自验证)</option>
-            <option value="tools/call:search">tools/call · search_codebase (检索代码库)</option>
-            <option value="tools/list">tools/list (列出全部注册工具 Schema)</option>
-            <option value="initialize">initialize (MCP 协议握手协商)</option>
-          </select>
-          <button class="mini-btn primary" id="btn-send-mcp" type="button">发送 RPC</button>
-        </div>
-        <div class="sub-label">JSON-RPC 2.0 响应报文</div>
-        <pre class="code-panel" id="mcp-response"></pre>
-      </div>
-
-      <!-- Tab 4: Hooks 护栏测试、审计账本与 14 天半衰期记忆 -->
-      <div class="drawer-pane" id="tab-audit">
-        <div class="pane-header">
-          <div>
-            <h2>Pre/Post Hooks 护栏 &amp; 衰减记忆</h2>
-            <p>测试高危命令阻断、敏感凭据脱敏与跨会话记忆检索</p>
-          </div>
-        </div>
-        <div class="inline-form">
-          <input id="hook-cmd-input" type="text" value="rm -rf / --no-preserve-root" aria-label="测试命令" />
-          <button class="mini-btn primary" id="btn-eval-hook" type="button">裁决命令</button>
-        </div>
-        <input
-          id="hook-out-input"
-          class="full-input"
-          type="text"
-          value="OPENAI_API_KEY=sk-demoMockKey01 DB_PASSWORD=demoPass"
-          aria-label="待脱敏输出"
-        />
-        <pre class="code-panel compact-pre" id="hook-eval-result"></pre>
-
-        <div class="sub-label">实时安全审计账本 (Audit Ledger)</div>
-        <div class="audit-list" id="audit-list"></div>
-
-        <div class="sub-label">14 天半衰期跨会话记忆召回 (Decay Memory)</div>
-        <div class="inline-form">
-          <input id="mem-query-input" type="text" value="网关滑窗限流器高并发边界" aria-label="记忆检索词" />
-          <button class="mini-btn" id="btn-recall-mem" type="button">检索 Top-K</button>
-        </div>
-        <div class="memory-list" id="memory-list"></div>
-      </div>
-    </aside>
-  </div>
-
-  <!-- 模型与 API Key 在线配置模态框（个人/公司开箱即用，免重启直连云端大模型） -->
-  <div class="modal-backdrop hidden" id="settings-modal">
-    <div class="modal-card" role="dialog" aria-labelledby="modal-title">
+  <!-- 4. 模型与 API Key 在线热切换模态弹窗（仿 Google Antigravity .dls-card 28px 毛玻璃弹窗） -->
+  <div id="settings-modal" class="agy-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="agy-dls-card">
       <div class="modal-header">
-        <h2 id="modal-title">模型路由与云端 API Key 设置</h2>
-        <button class="close-btn" id="btn-close-settings" type="button">✕</button>
+        <div>
+          <div class="modal-eyebrow">LLM ENGINE CONFIGURATION</div>
+          <h2 id="modal-title" class="modal-title">在线切换推理引擎与 API Key</h2>
+        </div>
+        <button id="btn-close-settings" class="modal-close-circle" type="button" aria-label="关闭弹窗">✕</button>
       </div>
-      <p class="modal-desc">
-        默认开启零密钥开箱即用模式（内置完整 Harness 演练引擎）。填入 DeepSeek / 通义千问 / OpenAI 兼容 API Key 后，无需重启服务即可直接调用真实大模型推理。
-      </p>
-      <div class="form-group">
-        <label for="cfg-mode">运行模式</label>
-        <select id="cfg-mode">
-          <option value="mock">Local Harness Engine (零密钥离线开箱即用)</option>
-          <option value="cloud">Cloud LLM API (直连 DeepSeek / 通义千问 / OpenAI)</option>
-        </select>
+      <div class="modal-body">
+        <label class="field-label">运行模式 (Execution Mode)
+          <select id="cfg-mode" class="ide-select full">
+            <option value="AUTO">AUTO — 配置 Key 自动走真实大模型，未配置走确定性沙箱</option>
+            <option value="LIVE_LLM">LIVE_LLM — 强制调用 OpenAI 兼容大模型 API</option>
+            <option value="DETERMINISTIC">DETERMINISTIC — 零外部依赖确定性回归演练</option>
+          </select>
+        </label>
+        <label class="field-label">OpenAI 兼容接口地址 (Base URL)
+          <input id="cfg-baseurl" class="ide-input full" type="text" value="https://api.deepseek.com/v1" />
+        </label>
+        <label class="field-label">模型名称 (Model ID)
+          <input id="cfg-model" class="ide-input full" type="text" value="deepseek-chat" />
+        </label>
+        <label class="field-label">API Key（仅保存在本地 JVM 内存，絕不落盘或外传）
+          <input id="cfg-apikey" class="ide-input full" type="password" placeholder="sk-..." />
+        </label>
       </div>
-      <div class="form-group">
-        <label for="cfg-baseurl">OpenAI 兼容 Base URL</label>
-        <input id="cfg-baseurl" type="text" value="https://api.deepseek.com/v1" placeholder="https://api.deepseek.com/v1 或 https://dashscope.aliyuncs.com/compatible-mode/v1" />
-      </div>
-      <div class="form-group">
-        <label for="cfg-model">模型名称 (Model ID)</label>
-        <input id="cfg-model" type="text" value="deepseek-chat" placeholder="deepseek-chat / qwen-max / gpt-4o" />
-      </div>
-      <div class="form-group">
-        <label for="cfg-apikey">API Key (仅保存在当前内存会话，自动脱敏)</label>
-        <input id="cfg-apikey" type="password" placeholder="sk-..." />
-      </div>
-      <div class="modal-actions">
-        <button class="mini-btn" id="btn-cancel-settings" type="button">取消</button>
-        <button class="mini-btn primary" id="btn-save-settings" type="button">保存并立即生效</button>
+      <div class="modal-footer">
+        <button id="btn-cancel-settings" class="hdr-btn" type="button">取消</button>
+        <button id="btn-save-settings" class="hdr-btn primary-cta" type="button">保存并热更新引擎</button>
       </div>
     </div>
   </div>

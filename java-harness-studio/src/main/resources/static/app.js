@@ -3,6 +3,7 @@
   let activeSource = null;
   let currentPolicy = "workspace-write";
   let currentScenario = "bugfix";
+  let currentAgentMode = "Agent";
   let artifacts = [];
   let activeArtifactIdx = 0;
 
@@ -13,15 +14,34 @@
       .replace(/>/g, "&gt;");
   }
 
-  // 1. 亮暗主题切换
+  // 1. 亮暗主题切换（Obsidian Dark <-> Apple Light）
   $("btn-theme-toggle").addEventListener("click", () => {
     const html = document.documentElement;
     const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
     html.setAttribute("data-theme", next);
-    $("btn-theme-toggle").textContent = next === "dark" ? "亮色模式" : "暗色模式";
+    $("theme-toggle-label").textContent = next === "dark" ? "亮色模式" : "暗黑模式";
   });
 
-  // 2. 顶部 3 档沙箱策略切换
+  // 2. 官网展台视图 (Showcase) <-> 全屏沉浸 IDE 视图 (Full IDE) 切换
+  $("btn-view-toggle").addEventListener("click", () => {
+    const html = document.documentElement;
+    const next = html.getAttribute("data-view") === "full-ide" ? "showcase" : "full-ide";
+    html.setAttribute("data-view", next);
+    $("view-toggle-label").textContent = next === "full-ide" ? "官网展台" : "全屏 IDE";
+  });
+
+  // 3. 顶部导航栏快速定位底部 Harness Console Drawer
+  document.querySelectorAll("[data-open-drawer]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-link").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const targetTab = btn.getAttribute("data-open-drawer");
+      const tabEl = document.querySelector(`.drawer-tab[data-tab="${targetTab}"]`);
+      if (tabEl) tabEl.click();
+    });
+  });
+
+  // 4. 沙箱策略切换
   document.querySelectorAll(".seg-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("active"));
@@ -31,7 +51,19 @@
     });
   });
 
-  // 3. 右侧 4 个 Inspector Tab 切换
+  // 5. Agent 模式胶囊切换 (Agent / Plan / Ask)
+  document.querySelectorAll(".mode-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll(".mode-pill").forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      currentAgentMode = pill.getAttribute("data-agent-mode");
+      if ($("composer-mode-text")) {
+        $("composer-mode-text").textContent = currentAgentMode;
+      }
+    });
+  });
+
+  // 6. 底部 Integrated Harness Console 4 个 Tab 切换
   document.querySelectorAll(".drawer-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".drawer-tab").forEach((t) => t.classList.remove("active"));
@@ -41,30 +73,45 @@
     });
   });
 
-  // 4. 渲染右侧 Git Diff 面板
+  // 7. 渲染中央多标签代码与行内 Git Diff 编辑器（含真实行号列）
   function renderArtifactDiff(idx) {
     activeArtifactIdx = idx;
     const item = artifacts[idx];
     if (!item) return;
 
-    document.querySelectorAll(".file-tab-btn").forEach((b, i) => {
-      b.classList.toggle("active", i === idx);
+    document.querySelectorAll(".file-tab-btn, .tree-file-btn").forEach((b) => {
+      b.classList.toggle("active", Number(b.getAttribute("data-idx")) === idx);
     });
 
+    if ($("editor-breadcrumb-path")) {
+      $("editor-breadcrumb-path").textContent = item.path;
+    }
+
     $("artifact-meta-bar").innerHTML = `
-      <span>Status: <strong>${escapeHtml(item.status)}</strong></span>
+      <span>${escapeHtml(item.status)}</span>
       <span style="color:var(--diff-add-ink)">+${item.additions}</span>
       <span style="color:var(--diff-del-ink)">-${item.deletions}</span>
     `;
 
     const lines = item.diffText.split("\n");
+    let lineNo = 18;
     $("diff-viewer").innerHTML = lines
       .map((ln) => {
         let cls = "";
-        if (ln.startsWith("@@")) cls = "hdr";
-        else if (ln.startsWith("+")) cls = "add";
-        else if (ln.startsWith("-")) cls = "del";
-        return `<div class="diff-line ${cls}">${escapeHtml(ln)}</div>`;
+        let gutter = "";
+        if (ln.startsWith("@@") || ln.startsWith("---") || ln.startsWith("+++")) {
+          cls = "hdr";
+          gutter = "···";
+        } else if (ln.startsWith("+")) {
+          cls = "add";
+          gutter = String(lineNo++);
+        } else if (ln.startsWith("-")) {
+          cls = "del";
+          gutter = " - ";
+        } else {
+          gutter = String(lineNo++);
+        }
+        return `<div class="diff-line ${cls}"><span class="diff-gutter">${gutter}</span><span class="diff-code">${escapeHtml(ln)}</span></div>`;
       })
       .join("");
   }
@@ -74,16 +121,27 @@
     if (item && navigator.clipboard) {
       navigator.clipboard.writeText(item.fullSource);
       $("btn-copy-diff").textContent = "已复制源码";
-      setTimeout(() => ($("btn-copy-diff").textContent = "复制补丁"), 1200);
+      setTimeout(() => ($("btn-copy-diff").textContent = "复制源码"), 1200);
     }
   });
 
-  // 5. 在对话舞台追加用户气泡与 Agent 步骤卡片
+  if ($("btn-accept-patch")) {
+    $("btn-accept-patch").addEventListener("click", () => {
+      $("btn-accept-patch").innerHTML = `<span>✓ Patch Applied</span>`;
+      setTimeout(() => {
+        $("btn-accept-patch").innerHTML = `<span>✓ Accept</span><kbd>⌘Y</kbd>`;
+      }, 1500);
+    });
+  }
+
+  // 8. 在右侧 Antigravity Agent 窗口追加用户气泡与步骤卡片
   function appendUserBubble(promptText, scenarioLabel) {
     const div = document.createElement("div");
     div.className = "user-turn";
     div.innerHTML = `
-      <div class="u-meta">USER TASK · ${escapeHtml(scenarioLabel.toUpperCase())} · POLICY=${escapeHtml(currentPolicy)}</div>
+      <div class="u-meta">${escapeHtml(currentAgentMode.toUpperCase())} MODE · ${escapeHtml(
+      scenarioLabel.toUpperCase()
+    )} · ${escapeHtml(currentPolicy)}</div>
       <div>${escapeHtml(promptText)}</div>
     `;
     $("chat-stream").appendChild(div);
@@ -95,7 +153,7 @@
     let html = `
       <div class="step-head">
         <span class="step-title">${escapeHtml(ev.title)}</span>
-        <span class="step-badge">STEP 0${ev.step} · ${escapeHtml(ev.type)}</span>
+        <span class="step-badge">0${ev.step} · ${escapeHtml(ev.type)}</span>
       </div>
       <div class="step-detail">${escapeHtml(ev.detail)}</div>
     `;
@@ -110,14 +168,17 @@
     }
     card.innerHTML = html;
     $("chat-stream").appendChild(card);
-    $("chat-stream").scrollTop = $("chat-stream").scrollHeight;
 
     card.querySelectorAll(".hitl-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const aid = btn.getAttribute("data-aid");
         const approved = btn.getAttribute("data-ok") === "true";
         const box = $(`hitl-${aid}`);
-        if (box) box.innerHTML = `<span class="step-badge">${approved ? "已人工批准，继续执行..." : "已人工拒绝，正在安全中止..."}</span>`;
+        if (box) {
+          box.innerHTML = `<span class="step-badge">${
+            approved ? "✓ 已人工批准，恢复 CompletableFuture 继续执行..." : "✕ 已人工拒绝，正在安全回滚..."
+          }</span>`;
+        }
         await fetch(`/api/approvals/${encodeURIComponent(aid)}/decide`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -128,7 +189,7 @@
     });
   }
 
-  // 6. 启动 SSE 流式 Agent Loop
+  // 9. 启动 SSE 流式 Agent Loop
   function startAgentSession(scenario, customPrompt = "") {
     if (activeSource) {
       activeSource.close();
@@ -138,6 +199,15 @@
     document.querySelectorAll(".session-item").forEach((item) => {
       item.classList.toggle("active", item.getAttribute("data-scenario") === scenario);
     });
+    document.querySelectorAll(".quick-pill").forEach((pill) => {
+      pill.classList.toggle("active", pill.getAttribute("data-run") === scenario);
+    });
+
+    if (scenario === "hitl" && artifacts.length > 2) {
+      renderArtifactDiff(2);
+    } else if (scenario === "bugfix" && artifacts.length > 0) {
+      renderArtifactDiff(0);
+    }
 
     const displayPrompt =
       customPrompt ||
@@ -169,7 +239,6 @@
     };
   }
 
-  // 绑定左侧会话、快捷胶囊与底部发送按钮
   document.querySelectorAll(".session-item").forEach((item) => {
     item.addEventListener("click", () => startAgentSession(item.getAttribute("data-scenario")));
   });
@@ -195,7 +264,7 @@
     }
   });
 
-  // 7. 上下文 /compact 压缩
+  // 10. 上下文 /compact 压缩
   async function runCompact() {
     const res = await fetch("/api/compact/simulate", {
       method: "POST",
@@ -216,14 +285,24 @@
     runCompact();
   });
 
-  // 8. MCP JSON-RPC 2.0 调试器
+  // 11. MCP JSON-RPC 2.0 调试器
   async function runMcpRpc() {
     const sel = $("mcp-method-select").value;
     let payload = { jsonrpc: "2.0", id: 1, method: sel, params: {} };
     if (sel === "tools/call:verify") {
-      payload = { jsonrpc: "2.0", id: 101, method: "tools/call", params: { name: "run_unit_test", arguments: { target: "SlidingWindowLimiterTest" } } };
+      payload = {
+        jsonrpc: "2.0",
+        id: 101,
+        method: "tools/call",
+        params: { name: "run_unit_test", arguments: { target: "SlidingWindowLimiterTest" } },
+      };
     } else if (sel === "tools/call:search") {
-      payload = { jsonrpc: "2.0", id: 102, method: "tools/call", params: { name: "search_codebase", arguments: { query: "barge_in" } } };
+      payload = {
+        jsonrpc: "2.0",
+        id: 102,
+        method: "tools/call",
+        params: { name: "search_codebase", arguments: { query: "barge_in" } },
+      };
     }
     const res = await fetch("/api/mcp/rpc", {
       method: "POST",
@@ -236,7 +315,7 @@
 
   $("btn-send-mcp").addEventListener("click", runMcpRpc);
 
-  // 9. Hooks 护栏测试、审计账本与记忆检索
+  // 12. Hooks 护栏测试、审计账本与记忆检索
   async function refreshAuditLog() {
     const list = await (await fetch("/api/audit")).json();
     $("audit-list").innerHTML = list
@@ -292,8 +371,10 @@
 
   $("btn-recall-mem").addEventListener("click", recallMemories);
 
-  // 10. 模型与 API Key 设置弹窗
-  $("btn-open-settings").addEventListener("click", () => $("settings-modal").classList.remove("hidden"));
+  // 13. 模型与 API Key 弹窗
+  const openSettings = () => $("settings-modal").classList.remove("hidden");
+  $("btn-open-settings").addEventListener("click", openSettings);
+  if ($("btn-model-trigger")) $("btn-model-trigger").addEventListener("click", openSettings);
   $("btn-close-settings").addEventListener("click", () => $("settings-modal").classList.add("hidden"));
   $("btn-cancel-settings").addEventListener("click", () => $("settings-modal").classList.add("hidden"));
 
@@ -310,6 +391,9 @@
     });
     const cfg = await res.json();
     $("mode-badge").textContent = cfg.effectiveMode;
+    if ($("composer-model-label")) {
+      $("composer-model-label").textContent = cfg.model || "deepseek-chat";
+    }
     $("settings-modal").classList.add("hidden");
   });
 
@@ -323,48 +407,47 @@
       {
         step: 1,
         type: "CONTEXT_INIT",
-        title: "装配 Harness 上下文：召回跨会话记忆 + 按需激活 Skill",
+        title: "Thought · 装配跨会话衰减记忆与按需激活 Skill",
         detail:
-          "• 召回 14 天半衰期记忆 2 条：[BUGFIX] 滑窗限流器需校验 (now - window, now] 左开右闭区间并阻断未来时钟漂移\n• 命中渐进式技能：java-concurrency-audit（仅按需加载正文 385 tokens，其余技能保持 31 tokens 索引态）",
+          "• 召回 14d 半衰期记忆 2 条：[BUGFIX] 滑窗限流器需校验 (now - window, now] 左开右闭区间并阻断未来时钟漂移\n• 激活渐进式技能：java-concurrency-audit（按需加载正文 385 tok）",
       },
       {
         step: 2,
         type: "TOOL_CALL",
-        title: "mcp://workspace/read_file · SlidingWindowLimiter.java",
+        title: "Read · SlidingWindowLimiter.java",
         detail:
           "定位缺陷：`timestamps.removeIf(t -> t > nowSec - windowSec)` 过滤方向写反，且未处理 `limit <= 0` 与未来时间戳漂移。",
       },
       {
         step: 3,
         type: "TOOL_CALL",
-        title: "mcp://workspace/write_file · 提交候选补丁 v1 (PreToolUse: ALLOW)",
-        detail: "已写入第 1 版时间窗口过滤补丁，自动触发 JUnit 单元测试闭环验证。",
+        title: "Edit · 提交候选补丁 v1 (PreToolUse: ALLOW)",
+        detail: "已写入第 1 版时间窗口过滤补丁，自动触发 JUnit 5 单元测试闭环验证。",
       },
       {
         step: 4,
         type: "SELF_VERIFY_FAIL",
-        title: "自动验证闭环 Round #1：JUnit 捕获边界断言失败",
+        title: "Test · JUnit Round #1 捕获时钟漂移边界断言失败",
         detail:
           "FAILED SlidingWindowLimiterTest#shouldRejectZeroLimitAndFutureClockSkew -> AssertionError: 未来时间戳 t=105.0 被误计入当前窗口 [90.0, 100.0]",
       },
       {
         step: 5,
         type: "SELF_VERIFY_PASS",
-        title: "自动验证闭环 Round #2：补齐 `t <= lowerBound || t > nowSec` 后全量绿灯",
+        title: "Test · JUnit Round #2 补齐 `t <= lowerBound || t > nowSec` 全绿通过",
         detail: "Tests run: 6, Failures: 0, Errors: 0 (耗时 48ms)。LoopConvergenceGuard 校验无重复死循环。",
       },
       {
         step: 6,
         type: "FINAL_ANSWER",
-        title: "任务收敛完成 · 已生成可合并 Git Diff 补丁",
+        title: "Completed · 已生成可合并 Git Diff 补丁",
         detail:
-          "已完成 `SlidingWindowLimiter.java` 修复并通过全部 6 项高并发与时钟漂移单元测试。补丁详情已同步至右侧「代码 Diff」面板。",
+          "已完成 `SlidingWindowLimiter.java` 修复并通过全部 6 项高并发与时钟漂移单元测试。补丁已同步至左侧代码编辑器。",
       },
     ];
     defaultEvents.forEach((ev) => appendAgentEventCard(ev));
   }
 
-  // 11. 初始化加载首屏数据与预渲染完整 6 步验证轨迹（确保首屏高信息密度且可直接交互）
   async function initWorkspace() {
     renderInitialDefaultTrace();
     try {
@@ -381,7 +464,7 @@
         <div class="skill-card-mini">
           <div class="sk-top">
             <span>${escapeHtml(s.name)}</span>
-            <span class="sk-tok">${s.indexTokens} -> ${s.fullBodyTokens} tok</span>
+            <span class="sk-tok">${s.indexTokens}→${s.fullBodyTokens}t</span>
           </div>
           <div class="sk-desc">${escapeHtml(s.description)}</div>
         </div>`
@@ -393,13 +476,29 @@
         .map(
           (f, i) => `
         <button class="file-tab-btn ${i === 0 ? "active" : ""}" data-idx="${i}" type="button">
-          <span>${escapeHtml(f.path.split("/").slice(-2).join("/"))}</span>
-          <span>+${f.additions} -${f.deletions}</span>
+          <span>${escapeHtml(f.path.split("/").pop())}</span>
+          <span style="color:var(--diff-add-ink)">+${f.additions}</span>
+          <span style="color:var(--diff-del-ink)">-${f.deletions}</span>
         </button>`
         )
         .join("");
 
-      document.querySelectorAll(".file-tab-btn").forEach((btn) => {
+      if ($("sidebar-file-tree")) {
+        $("sidebar-file-tree").innerHTML = files
+          .map(
+            (f, i) => `
+          <button class="tree-file-btn ${i === 0 ? "active" : ""}" data-idx="${i}" type="button">
+            <span>${escapeHtml(f.path.split("/").pop())}</span>
+            <span class="tree-stat">
+              <span style="color:var(--diff-add-ink)">+${f.additions}</span>
+              <span style="color:var(--diff-del-ink)">-${f.deletions}</span>
+            </span>
+          </button>`
+          )
+          .join("");
+      }
+
+      document.querySelectorAll(".file-tab-btn, .tree-file-btn").forEach((btn) => {
         btn.addEventListener("click", () => renderArtifactDiff(Number(btn.getAttribute("data-idx"))));
       });
       renderArtifactDiff(0);
