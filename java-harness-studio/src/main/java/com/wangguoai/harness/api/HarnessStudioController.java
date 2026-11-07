@@ -49,14 +49,35 @@ public class HarnessStudioController {
     public Map<String, Object> overview() {
         return Map.of(
                 "application", "wg-harness-studio",
-                "version", "0.3.0",
+                "version", "0.4.0",
                 "javaVersion", System.getProperty("java.version"),
                 "effectiveMode", loopEngine.getEffectiveMode(),
                 "policies", List.of("workspace-write", "read-only", "full-access"),
                 "skillsCount", mcpRegistry.listSkills().size(),
                 "memoriesCount", memoryStore.listAll().size(),
-                "auditCount", guardrails.getRecentAuditLog().size()
+                "auditCount", guardrails.getRecentAuditLog().size(),
+                "llmConfig", loopEngine.getLlmConfigSummary()
         );
+    }
+
+    @GetMapping("/settings/llm")
+    public Map<String, Object> getLlmSettings() {
+        return loopEngine.getLlmConfigSummary();
+    }
+
+    @PostMapping("/settings/llm")
+    public Map<String, Object> updateLlmSettings(@RequestBody Map<String, Object> body) {
+        String runMode = String.valueOf(body.getOrDefault("runMode", "cloud"));
+        String baseUrl = String.valueOf(body.getOrDefault("baseUrl", "https://api.deepseek.com/v1"));
+        String apiKey = String.valueOf(body.getOrDefault("apiKey", ""));
+        String model = String.valueOf(body.getOrDefault("model", "deepseek-chat"));
+        loopEngine.updateLlmConfig(runMode, baseUrl, apiKey, model);
+        return loopEngine.getLlmConfigSummary();
+    }
+
+    @GetMapping("/workspace/files")
+    public List<AgentLoopEngine.WorkspaceArtifact> listWorkspaceFiles() {
+        return loopEngine.getWorkspaceArtifacts();
     }
 
     @GetMapping(value = "/run/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

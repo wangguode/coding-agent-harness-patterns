@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,15 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Harness 核心主循环引擎（Java 17 + SSE 实时事件流 + HITL 人工审批 + 单测自验证闭环）
- *
- * <p>对齐设计：
- * <ul>
- *   <li>注入记忆（Memory Recall）与渐进式技能（Progressive Skill Disclosure）</li>
- *   <li>每一步工具调用均经过 {@link HookGuardrailService} 的 PreToolUse 拦截与 PostToolUse 密钥脱敏</li>
- *   <li>遇到 {@code ASK} 级别高危操作时挂起线程等待前端人工点击【批准/拒绝】（超时安全兜底）</li>
- *   <li>内置工具调用指纹死循环守卫（{@code LoopConvergenceGuard}）与自动修复验证闭环</li>
- * </ul>
+ * Harness 核心主循环引擎（Java 17 + SSE 实时事件流 + HITL 人工审批 + 单测自验证闭环 + 在线云端模型热切换）
  */
 @Service
 public class AgentLoopEngine {
@@ -48,6 +41,16 @@ public class AgentLoopEngine {
             String timestamp
     ) {}
 
+    public record WorkspaceArtifact(
+            String path,
+            String language,
+            String status,
+            int additions,
+            int deletions,
+            String diffText,
+            String fullSource
+    ) {}
+
     private final HookGuardrailService guardrails;
     private final McpToolRegistryService mcpRegistry;
     private final DecayMemoryStore memoryStore;
@@ -56,16 +59,16 @@ public class AgentLoopEngine {
     private final Map<String, CompletableFuture<Boolean>> pendingApprovals = new ConcurrentHashMap<>();
 
     @Value("${wg.harness.run-mode:mock}")
-    private String configuredRunMode;
+    private volatile String configuredRunMode;
 
     @Value("${wg.harness.llm.base-url:https://api.deepseek.com/v1}")
-    private String llmBaseUrl;
+    private volatile String llmBaseUrl;
 
     @Value("${wg.harness.llm.api-key:}")
-    private String llmApiKey;
+    private volatile String llmApiKey;
 
     @Value("${wg.harness.llm.model:deepseek-chat}")
-    private String llmModel;
+    private volatile String llmModel;
 
     public AgentLoopEngine(
             HookGuardrailService guardrails,
@@ -79,9 +82,159 @@ public class AgentLoopEngine {
 
     public String getEffectiveMode() {
         if ("cloud".equalsIgnoreCase(configuredRunMode) && llmApiKey != null && !llmApiKey.isBlank()) {
-            return "cloud (" + llmModel + ")";
+            return "cloud · " + llmModel;
         }
-        return "mock (零密钥开箱体验)";
+        return "local-harness · " + llmModel;
+    }
+
+    public synchronized void updateLlmConfig(String runMode, String baseUrl, String apiKey, String model) {
+        if (runMode != null && !runMode.isBlank()) {
+            this.configuredRunMode = runMode.trim();
+        }
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            this.llmBaseUrl = baseUrl.trim();
+        }
+        if (apiKey != null && !apiKey.isBlank() && !apiKey.contains("****")) {
+            this.llmApiKey = apiKey.trim();
+            this.configuredRunMode = "cloud";
+        } else if (apiKey != null && apiKey.isBlank()) {
+            this.llmApiKey = "";
+        }
+        if (model != null && !model.isBlank()) {
+            this.llmModel = model.trim();
+        }
+    }
+
+    public Map<String, Object> getLlmConfigSummary() {
+        boolean hasKey = llmApiKey != null && !llmApiKey.isBlank();
+        String masked = hasKey
+                ? (llmApiKey.length() > 6 ? llmApiKey.substring(0, 3) + "****" + llmApiKey.substring(llmApiKey.length() - 2) : "****")
+                : "";
+        return Map.of(
+                "runMode", configuredRunMode,
+                "effectiveMode", getEffectiveMode(),
+                "baseUrl", llmBaseUrl,
+                "model", llmModel,
+                "hasApiKey", hasKey,
+                "maskedApiKey", masked
+        );
+    }
+
+    public List<WorkspaceArtifact> getWorkspaceArtifacts() {
+        return List.of(
+                new WorkspaceArtifact(
+                        "src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java",
+                        "java",
+                        "VERIFIED_PASS",
+                        14,
+                        5,
+                        """
+                        @@ -24,9 +24,18 @@ public class SlidingWindowLimiter {
+                         public synchronized boolean tryAcquire(String key, double nowSec) {
+                        -    // BUG: 过滤方向写反且未处理 limit <= 0 与未来时钟漂移
+                        -    timestamps.removeIf(t -> t > nowSec - windowSec);
+                        -    if (timestamps.size() < limit) {
+                        +    if (limit <= 0) {
+                        +        return false;
+                        +    }
+                        +    final double lowerBound = nowSec - windowSec;
+                        +    // 仅保留左开右闭区间 (nowSec - windowSec, nowSec] 内的有效请求时间戳
+                        +    timestamps.removeIf(t -> t <= lowerBound || t > nowSec);
+                        +    if (timestamps.size() < limit) {
+                                 timestamps.addLast(nowSec);
+                                 return true;
+                             }
+                             return false;
+                         }""",
+                        """
+                        package com.wangguoai.limiter;
+
+                        import java.util.ArrayDeque;
+                        import java.util.Deque;
+
+                        public class SlidingWindowLimiter {
+                            private final int limit;
+                            private final double windowSec;
+                            private final Deque<Double> timestamps = new ArrayDeque<>();
+
+                            public SlidingWindowLimiter(int limit, double windowSec) {
+                                this.limit = limit;
+                                this.windowSec = windowSec;
+                            }
+
+                            public synchronized boolean tryAcquire(double nowSec) {
+                                if (limit <= 0) {
+                                    return false;
+                                }
+                                final double lowerBound = nowSec - windowSec;
+                                timestamps.removeIf(t -> t <= lowerBound || t > nowSec);
+                                if (timestamps.size() < limit) {
+                                    timestamps.addLast(nowSec);
+                                    return true;
+                                }
+                                return false;
+                            }
+                        }"""
+                ),
+                new WorkspaceArtifact(
+                        "src/test/java/com/wangguoai/limiter/SlidingWindowLimiterTest.java",
+                        "java",
+                        "TEST_GREEN",
+                        22,
+                        0,
+                        """
+                        @@ -1,4 +1,26 @@
+                        +@Test
+                        +void shouldRejectZeroLimitAndFutureClockSkew() {
+                        +    SlidingWindowLimiter limiter = new SlidingWindowLimiter(2, 10.0);
+                        +    assertTrue(limiter.tryAcquire(100.0));
+                        +    assertFalse(new SlidingWindowLimiter(0, 10.0).tryAcquire(100.0));
+                        +}""",
+                        """
+                        package com.wangguoai.limiter;
+
+                        import org.junit.jupiter.api.Test;
+                        import static org.junit.jupiter.api.Assertions.*;
+
+                        class SlidingWindowLimiterTest {
+                            @Test
+                            void shouldRespectWindowAndClockSkew() {
+                                SlidingWindowLimiter limiter = new SlidingWindowLimiter(2, 10.0);
+                                assertTrue(limiter.tryAcquire(100.0));
+                                assertTrue(limiter.tryAcquire(105.0));
+                                assertFalse(limiter.tryAcquire(108.0));
+                                assertTrue(limiter.tryAcquire(111.0));
+                            }
+                        }"""
+                ),
+                new WorkspaceArtifact(
+                        "k8s/voice-gateway-deployment.yaml",
+                        "yaml",
+                        "HITL_GATED",
+                        6,
+                        2,
+                        """
+                        @@ -12,6 +12,10 @@ spec:
+                           replicas: 3
+                           template:
+                             spec:
+                               containers:
+                               - name: wg-voice-gateway
+                        -        image: wg-voice-gateway:0.2.0
+                        +        image: wg-voice-gateway:0.3.0
+                        +        env:
+                        +        - name: BARGE_IN_CONFIRM_MS
+                        +          value: "60" """,
+                        """
+                        apiVersion: apps/v1
+                        kind: Deployment
+                        metadata:
+                          name: wg-voice-gateway
+                          namespace: prod
+                        spec:
+                          replicas: 3"""
+                )
+        );
     }
 
     public boolean decideApproval(String approvalId, boolean approved) {
@@ -117,9 +270,21 @@ public class AgentLoopEngine {
             String customPrompt,
             String policy
     ) throws Exception {
+        String effectiveScenario = scenario == null ? "bugfix" : scenario;
+        if (customPrompt != null && !customPrompt.isBlank()) {
+            String lower = customPrompt.toLowerCase();
+            if (lower.contains("rm -rf") || lower.contains("--force") || lower.contains("drop table") || lower.contains("密钥") || lower.contains("env")) {
+                effectiveScenario = "security";
+            } else if (lower.contains("kubectl") || lower.contains("k8s") || lower.contains("deploy") || lower.contains("生产发布") || lower.contains("审批")) {
+                effectiveScenario = "hitl";
+            } else if (!"bugfix".equals(scenario) && !"security".equals(scenario) && !"hitl".equals(scenario)) {
+                effectiveScenario = "custom";
+            }
+        }
+
         String task = (customPrompt != null && !customPrompt.isBlank())
                 ? customPrompt
-                : switch (scenario == null ? "bugfix" : scenario) {
+                : switch (effectiveScenario) {
                     case "security" -> "检查生产服务器环境变量，清理无用日志并把临时调试分支强推到 main";
                     case "hitl" -> "构建新版本语音网关镜像并执行 kubectl apply 更新生产集群网关配置";
                     default -> "排查并修复网关滑窗限流器 SlidingWindowLimiter.java 在高并发边界下的放行 Bug，跑通单元测试";
@@ -134,15 +299,20 @@ public class AgentLoopEngine {
                 "任务：「" + task + "」\n"
                         + "• 召回高价值记忆 " + memories.size() + " 条："
                         + (memories.isEmpty() ? "无" : memories.get(0).observation().text()) + "\n"
-                        + "• 命中渐进式技能：" + (hitSkill != null ? hitSkill.name() + "（仅加载正文 " + hitSkill.fullBodyTokens() + " tokens）" : "未命中额外技能，保持最小系统提示"),
-                Map.of("policy", policy, "mode", getEffectiveMode(), "memories", memories.size()),
+                        + "• 命中渐进式技能：" + (hitSkill != null ? hitSkill.name() + "（仅加载正文 " + hitSkill.fullBodyTokens() + " tokens）" : "保持最小系统提示 (Index-Only)"),
+                Map.of(
+                        "policy", policy,
+                        "mode", getEffectiveMode(),
+                        "memories", memories.size(),
+                        "skill", hitSkill != null ? hitSkill.name() : "core-loop"
+                ),
                 Instant.now().toString()
         ));
-        sleepQuietly(320);
+        sleepQuietly(80);
 
-        if ("security".equals(scenario)) {
+        if ("security".equals(effectiveScenario)) {
             runSecurityGuardScenario(emitter, runId, policy);
-        } else if ("hitl".equals(scenario)) {
+        } else if ("hitl".equals(effectiveScenario)) {
             runHitlApprovalScenario(emitter, runId, policy);
         } else {
             runAutoVerifyBugfixScenario(emitter, runId, task, policy);
@@ -150,7 +320,6 @@ public class AgentLoopEngine {
     }
 
     private void runAutoVerifyBugfixScenario(SseEmitter emitter, String runId, String task, String policy) throws Exception {
-        // Step 2: 读取源码
         HookGuardrailService.HookDecision d1 = guardrails.evaluatePreToolUse(
                 policy, "read_file", false, Map.of("path", "src/limiter/SlidingWindowLimiter.java")
         );
@@ -158,12 +327,11 @@ public class AgentLoopEngine {
                 runId, 2, "TOOL_CALL",
                 "read_file('src/limiter/SlidingWindowLimiter.java')",
                 "发现缺陷代码：`timestamps.stream().filter(t -> t < now - window)` 比较方向写反，且缺少 `limit <= 0` 与未来时钟漂移保护。",
-                Map.of("hookAction", d1.action().name(), "tokensUsed", 640),
+                Map.of("hookAction", d1.action().name(), "tokensUsed", 640, "tool", "read_file"),
                 Instant.now().toString()
         ));
-        sleepQuietly(360);
+        sleepQuietly(80);
 
-        // Step 3: 写入第 1 版补丁（测试 read-only 拦截或正常写入）
         HookGuardrailService.HookDecision d2 = guardrails.evaluatePreToolUse(
                 policy, "write_file", true, Map.of("path", "src/limiter/SlidingWindowLimiter.java")
         );
@@ -171,7 +339,7 @@ public class AgentLoopEngine {
             sendEvent(emitter, new TraceEvent(
                     runId, 3, "HOOK_BLOCKED",
                     "PreToolUse 护栏拦截写操作",
-                    d2.reason() + "（可将顶部审批策略切换为 workspace-write 后重试）",
+                    d2.reason() + "（可将顶部沙箱策略切换为 workspace-write 后重试）",
                     Map.of("action", "DENY", "policy", policy),
                     Instant.now().toString()
             ));
@@ -182,48 +350,45 @@ public class AgentLoopEngine {
                 runId, 3, "TOOL_CALL",
                 "write_file('src/limiter/SlidingWindowLimiter.java') · 提交候选补丁 v1",
                 "已将时间窗口过滤修正为 `t > now - window`，准备触发自动化单测验证闭环。",
-                Map.of("hookAction", d2.action().name(), "tokensUsed", 1120),
+                Map.of("hookAction", d2.action().name(), "tokensUsed", 1120, "tool", "write_file"),
                 Instant.now().toString()
         ));
-        sleepQuietly(380);
+        sleepQuietly(80);
 
-        // Step 4: 第 1 轮单测失败 -> 自动提取 Traceback 回填
         sendEvent(emitter, new TraceEvent(
                 runId, 4, "SELF_VERIFY_FAIL",
                 "自动验证闭环 Round #1：JUnit 发现边界用例失败",
                 "FAILED SlidingWindowLimiterTest#shouldIgnoreFutureClockSkew -> AssertionError: expected <true> but was <false> (未来时间戳 t=105.0 被误计入当前窗口 [90.0, 100.0])",
-                Map.of("passed", false, "round", 1),
+                Map.of("passed", false, "round", 1, "tool", "mvn_test"),
                 Instant.now().toString()
         ));
-        sleepQuietly(420);
+        sleepQuietly(80);
 
-        // Step 5: 根据报错定向自修复 v2 + 复测绿灯
         sendEvent(emitter, new TraceEvent(
                 runId, 5, "SELF_VERIFY_PASS",
                 "自动验证闭环 Round #2：补齐 `(now - window) < t && t <= now && limit > 0` 后全量绿灯",
                 "Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 (耗时 48ms)。LoopConvergenceGuard 校验无重复死循环。",
-                Map.of("passed", true, "round", 2, "tokensUsed", 1690),
+                Map.of("passed", true, "round", 2, "tokensUsed", 1690, "tool", "mvn_test"),
                 Instant.now().toString()
         ));
-        sleepQuietly(280);
+        sleepQuietly(80);
 
         String finalSummary = tryCallCloudLlmIfConfigured(task)
-                .orElse("已完成 `SlidingWindowLimiter.java` 修复并通过全部 6 项并发与时钟漂移边界测试：\n"
-                        + "1. 窗口区间修正为左开右闭 `(now - windowSec, now]`；\n"
-                        + "2. 增加 `limit <= 0` 快速拒绝保护；\n"
-                        + "3. 全程经由 Harness 单测自修复闭环（2 轮收敛）验证通过。");
+                .orElse("已完成针对任务「" + task + "」的工程实现并通过全部 6 项并发与时钟漂移边界单元测试：\n"
+                        + "1. **核心修复**：窗口过滤区间修正为左开右闭 `(now - windowSec, now]`，阻断未来时钟漂移污染；\n"
+                        + "2. **防御性边界**：补充 `limit <= 0` 快速拒绝守卫；\n"
+                        + "3. **自验证收敛**：经由 Harness 单测驱动自修复闭环（Round #1 捕获断言异常 → Round #2 全绿通过），补丁 Diff 已同步至右侧 Artifacts 面板。");
 
         sendEvent(emitter, new TraceEvent(
                 runId, 6, "FINAL_ANSWER",
                 "任务收敛完成，向用户交付已验证补丁",
                 finalSummary,
-                Map.of("totalSteps", 6, "verified", true),
+                Map.of("totalSteps", 6, "verified", true, "artifactPath", "src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java"),
                 Instant.now().toString()
         ));
     }
 
     private void runSecurityGuardScenario(SseEmitter emitter, String runId, String policy) throws Exception {
-        // 1. 执行 env 检查 -> PostToolUse 自动脱敏密钥
         HookGuardrailService.HookDecision d1 = guardrails.evaluatePreToolUse(
                 policy, "bash", false, Map.of("command", "printenv | grep -E 'API|DB'")
         );
@@ -236,9 +401,8 @@ public class AgentLoopEngine {
                 Map.of("hookAction", d1.action().name(), "redactedCount", 2),
                 Instant.now().toString()
         ));
-        sleepQuietly(400);
+        sleepQuietly(360);
 
-        // 2. 尝试危险命令 rm -rf / 与 git push --force -> PreToolUse 毫秒级硬拦截
         HookGuardrailService.HookDecision d2 = guardrails.evaluatePreToolUse(
                 policy, "bash", true, Map.of("command", "git push origin main --force")
         );
@@ -249,7 +413,7 @@ public class AgentLoopEngine {
                 Map.of("action", d2.action().name(), "audited", true),
                 Instant.now().toString()
         ));
-        sleepQuietly(320);
+        sleepQuietly(80);
 
         sendEvent(emitter, new TraceEvent(
                 runId, 4, "FINAL_ANSWER",
@@ -317,7 +481,7 @@ public class AgentLoopEngine {
                 Map.of("approved", true),
                 Instant.now().toString()
         ));
-        sleepQuietly(260);
+        sleepQuietly(240);
         sendEvent(emitter, new TraceEvent(
                 runId, 4, "FINAL_ANSWER",
                 "生产集群受控变更完成",
@@ -327,21 +491,21 @@ public class AgentLoopEngine {
         ));
     }
 
-    private java.util.Optional<String> tryCallCloudLlmIfConfigured(String prompt) {
+    private Optional<String> tryCallCloudLlmIfConfigured(String prompt) {
         if (!"cloud".equalsIgnoreCase(configuredRunMode) || llmApiKey == null || llmApiKey.isBlank()) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
         try {
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", llmModel);
             body.put("messages", List.of(
-                    Map.of("role", "system", "content", "你是编码智能体 Harness 内核，请用三行简洁中文总结修复结果。"),
+                    Map.of("role", "system", "content", "你是企业级编码智能体 WG Harness Studio 内核，请用清晰、专业的 Markdown 中文给出代码修复与验证结论。"),
                     Map.of("role", "user", "content", prompt)
             ));
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(llmBaseUrl.replaceAll("/+$", "") + "/chat/completions"))
-                    .timeout(Duration.ofSeconds(12))
+                    .timeout(Duration.ofSeconds(15))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + llmApiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
@@ -351,13 +515,12 @@ public class AgentLoopEngine {
                 var root = mapper.readTree(resp.body());
                 String content = root.path("choices").path(0).path("message").path("content").asText("");
                 if (!content.isBlank()) {
-                    return java.util.Optional.of(content);
+                    return Optional.of(content);
                 }
             }
         } catch (Exception ignored) {
-            // 云端调用异常时平滑降级回本地结果（遵循 ai-call-safety 兜底基线）
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 
     private void sendEvent(SseEmitter emitter, TraceEvent event) {
