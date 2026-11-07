@@ -1,19 +1,25 @@
 {
-  "name": "@wangguode/wg-codex-desktop",
+  "name": "@wangguode/harness-agent-desktop",
   "version": "0.5.0",
-  "description": "WG CodeX Cross-Platform Desktop Shell for macOS and Windows",
+  "description": "Harness Agent Cross-Platform Desktop App for macOS (.dmg/.app) and Windows (.exe)",
   "main": "main.js",
   "type": "module",
   "author": "王果 (wangguode)",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win"
+    "build:mac": "electron-builder --mac --x64 --arm64",
+    "build:win": "electron-builder --win --x64"
   },
   "build": {
-    "appId": "com.wangguoai.codex.desktop",
-    "productName": "WG CodeX Studio",
+    "appId": "com.wangguoai.harness.desktop",
+    "productName": "Harness Agent",
+    "extraResources": [
+      {
+        "from": "../java-harness-studio/target/wg-harness-studio-0.3.0.jar",
+        "to": "backend/harness-agent.jar"
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": ["dmg", "zip"]
@@ -23,6 +29,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
   }
 }

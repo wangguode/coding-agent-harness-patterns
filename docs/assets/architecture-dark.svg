@@ -139,7 +139,7 @@
 <rect x="296" y="426" width="1238" height="672" rx="22" fill="#0F1E36" stroke="#64748B" stroke-width="2.0" filter="url(#softShadow)"/>
 <path d="M342 486 L362 444 L378 444 L358 486 Z" fill="#00C6FF"/>
 <path d="M366 486 L386 444 L408 444 L388 486 Z" fill="url(#brandGrad)"/>
-<text x="424" y="481" font-size="34" font-weight="800" fill="#F8FAFC">WG Harness Studio 2.0</text>
+<text x="424" y="481" font-size="34" font-weight="800" fill="#F8FAFC">Harness Agent 2.0</text>
 <rect x="888" y="451" width="54" height="32" rx="6" fill="#EA580C"/>
 <text x="915" y="472" text-anchor="middle" font-size="14" font-weight="800" fill="#FFFFFF">Java</text>
 <rect x="952" y="451" width="68" height="32" rx="6" fill="#2563EB"/>

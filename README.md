@@ -44,39 +44,43 @@ Codex、Claude Code、AgentScope 等主流智能体系统的工程代码动辄�
 
 ---
 
-## 一、Java 17 + Spring Boot 3 全栈跨平台工作台 (`WG CodeX Studio`)
+## 一、Java 17 + Spring Boot 3 全栈跨平台工作台 (`Harness Agent`)
 
-针对企业后端主流的 Java 技术栈与跨平台桌面研发场景，`java-harness-studio/` 与 `desktop-shell/` 模块基于 **Java 17 + Spring Boot 3.3.5 + Electron (macOS / Windows)** 实现了开箱即用的 `WG CodeX Studio` 全栈编码智能体工作台（包命名空间 `com.wangguoai.harness`）：
+针对企业后端主流的 Java 技术栈与跨平台桌面研发场景，`java-harness-studio/`、`web-ui/` 与 `desktop-shell/` 模块基于 **Java 17 + Spring Boot 3.3.5 + Next.js/React + Electron (macOS / Windows)** 实现了开箱即用的 `Harness Agent` 全栈编码智能体工作台（包命名空间 `com.wangguoai.harness`）：
 
-### 1. Codex Agent 主视图（流式推理 + 自验证闭环 + 实时 Diff / 在线源码编辑）
+### 1. Harness Agent 主视图（ReAct 工具调用 + 单测自验证闭环 + 实时 Diff / 终端抽屉）
 <p align="center">
-  <img alt="WG CodeX Studio Chat & Diff View" src="./docs/assets/studio-preview.png" width="100%">
+  <img alt="Harness Agent Main Conversation & Trace View" src="./docs/assets/studio-preview.png" width="100%">
 </p>
 
-### 2. Tools & MCP Servers 可视化配置中心（支持一键开关、在线新增 MCP 节点与 JSON-RPC 调试）
+### 2. 工具与 MCP 服务配置中心（支持一键开关、在线挂载 MCP Server 与 JSON-RPC 2.0 调试）
 <p align="center">
-  <img alt="WG CodeX Studio Tools & MCP Center" src="./docs/assets/studio-mcp-tools.png" width="100%">
+  <img alt="Harness Agent MCP & Tools Registry" src="./docs/assets/studio-mcp-tools.png" width="100%">
 </p>
 
-### 3. Agent Skills (`SKILL.md`) 渐进式技能管理中心（支持按 Scope 开关与在线编辑 YAML/Markdown）
+### 3. Agent 技能 (`SKILL.md`) 渐进式管理中心（支持按需激活与在线编辑 Markdown）
 <p align="center">
-  <img alt="WG CodeX Studio Skills Manager" src="./docs/assets/studio-skills.png" width="100%">
+  <img alt="Harness Agent Skills Manager" src="./docs/assets/studio-skills.png" width="100%">
 </p>
 
-### 30 秒跨平台开箱即用（支持 macOS / Windows / Linux 与 Electron 独立桌面端）
+### 30 秒跨平台启动 & 桌面端打包（兼容 macOS `.dmg` / Windows `.exe`）
 
 ```bash
 git clone https://github.com/wangguode/coding-agent-harness-patterns.git
 cd coding-agent-harness-patterns
 
-# 方式 A：macOS / Linux 一键启动（自动编译并打开 http://127.0.0.1:8090）
+# 方式 A：macOS / Linux 一键启动 Web 工作台（自动编译并打开 http://127.0.0.1:8090）
 ./start-mac-linux.sh
 
-# 方式 B：Windows 10/11 一键启动（CMD 或 PowerShell）
+# 方式 B：Windows 10/11 一键启动 Web 工作台（双击或 CMD/PowerShell 运行）
 start-windows.bat
 
-# 方式 C：启动 Electron 跨平台独立桌面窗口 (macOS .app / Windows .exe)
-cd desktop-shell && npm install && npm start
+# 方式 C：启动或打包独立桌面客户端 (支持 macOS Apple Silicon/Intel .dmg 与 Windows .exe)
+cd desktop-shell
+npm install
+npm start            # 直接拉起内嵌 Java 17 引擎的独立桌面窗口
+npm run build:mac    # 打包 macOS 桌面安装包 (dist/*.dmg, dist/*.zip)
+npm run build:win    # 打包 Windows 桌面安装包 (dist/*.exe NSIS & Portable)
 ```
 
 启动后打开浏览器访问 **`http://localhost:8090`**，可直接交互体验四大工程面板：
