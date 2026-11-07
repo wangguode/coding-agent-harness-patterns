@@ -44,25 +44,39 @@ Codex、Claude Code、AgentScope 等主流智能体系统的工程代码动辄�
 
 ---
 
-## 一、Java 17 + Spring Boot 3 全栈工作台 (`WG Harness Studio`)
+## 一、Java 17 + Spring Boot 3 全栈跨平台工作台 (`WG CodeX Studio`)
 
-针对国内企业后端主流的 Java 技术栈，`java-harness-studio/` 模块基于 **Java 17 + Spring Boot 3.3.5** 实现了完整的智能体 Harness 内核与全新设计的 Web 可视化操控台（包命名空间 `com.wangguoai.harness`）：
+针对企业后端主流的 Java 技术栈与跨平台桌面研发场景，`java-harness-studio/` 与 `desktop-shell/` 模块基于 **Java 17 + Spring Boot 3.3.5 + Electron (macOS / Windows)** 实现了开箱即用的 `WG CodeX Studio` 全栈编码智能体工作台（包命名空间 `com.wangguoai.harness`）：
 
+### 1. Codex Agent 主视图（流式推理 + 自验证闭环 + 实时 Diff / 在线源码编辑）
 <p align="center">
-  <img alt="WG Harness Studio Preview" src="./docs/assets/studio-preview.png" width="100%">
+  <img alt="WG CodeX Studio Chat & Diff View" src="./docs/assets/studio-preview.png" width="100%">
 </p>
 
-### 30 秒开箱即用（零 API Key 默认离线演练，支持切换云端大模型）
+### 2. Tools & MCP Servers 可视化配置中心（支持一键开关、在线新增 MCP 节点与 JSON-RPC 调试）
+<p align="center">
+  <img alt="WG CodeX Studio Tools & MCP Center" src="./docs/assets/studio-mcp-tools.png" width="100%">
+</p>
+
+### 3. Agent Skills (`SKILL.md`) 渐进式技能管理中心（支持按 Scope 开关与在线编辑 YAML/Markdown）
+<p align="center">
+  <img alt="WG CodeX Studio Skills Manager" src="./docs/assets/studio-skills.png" width="100%">
+</p>
+
+### 30 秒跨平台开箱即用（支持 macOS / Windows / Linux 与 Electron 独立桌面端）
 
 ```bash
 git clone https://github.com/wangguode/coding-agent-harness-patterns.git
-cd coding-agent-harness-patterns/java-harness-studio
+cd coding-agent-harness-patterns
 
-# 1. 运行自动化集成单测（验证 Agent Loop / PreToolUse 拦截 / Compact 压缩 / MCP 协议）
-mvn test
+# 方式 A：macOS / Linux 一键启动（自动编译并打开 http://127.0.0.1:8090）
+./start-mac-linux.sh
 
-# 2. 一键启动 Spring Boot 3 全栈工作台（默认监听 http://localhost:8090）
-mvn spring-boot:run
+# 方式 B：Windows 10/11 一键启动（CMD 或 PowerShell）
+start-windows.bat
+
+# 方式 C：启动 Electron 跨平台独立桌面窗口 (macOS .app / Windows .exe)
+cd desktop-shell && npm install && npm start
 ```
 
 启动后打开浏览器访问 **`http://localhost:8090`**，可直接交互体验四大工程面板：

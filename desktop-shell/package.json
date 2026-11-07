@@ -1,0 +1,28 @@
+{
+  "name": "@wangguode/wg-codex-desktop",
+  "version": "0.5.0",
+  "description": "WG CodeX Cross-Platform Desktop Shell for macOS and Windows",
+  "main": "main.js",
+  "type": "module",
+  "author": "王果 (wangguode)",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.wangguoai.codex.desktop",
+    "productName": "WG CodeX Studio",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

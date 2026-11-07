@@ -1,235 +1,610 @@
-<!doctype html>
-<html lang="zh-CN" data-theme="dark">
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Antigravity · Coding Agent</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WG CodeX — Enterprise Coding Agent & Harness Workbench</title>
+  <link rel="stylesheet" href="/studio.css" />
 </head>
 <body>
-  <!-- 全屏极简 Antigravity / Codex 原生应用外壳 -->
-  <div class="app-shell">
-    <!-- 1. 左侧极简会话栏 (240px) -->
-    <aside class="app-sidebar">
-      <div class="sidebar-top">
-        <div class="brand">
-          <svg class="brand-logo" viewBox="0 0 210 200" width="20" height="20" fill="none">
-            <defs>
-              <linearGradient id="agy-g" x1="15" y1="20" x2="190" y2="185" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#3186FF"/>
-                <stop offset="40%" stop-color="#FC413D"/>
-                <stop offset="75%" stop-color="#FBBC04"/>
-                <stop offset="100%" stop-color="#00B95C"/>
-              </linearGradient>
-            </defs>
-            <path d="M175.28 181.64C185.19 189.07 200.06 184.12 186.43 170.48C145.54 130.83 154.21 21.78 103.4 21.78C52.6 21.78 61.27 130.83 20.38 170.48C5.51 185.35 21.62 189.07 31.53 181.64C69.95 155.61 67.47 109.76 103.4 109.76C139.34 109.76 136.86 155.61 175.28 181.64Z" fill="url(#agy-g)"/>
-          </svg>
-          <span class="brand-name">Antigravity</span>
-        </div>
-        <button id="btn-new-session" class="new-thread-btn" type="button" title="New Thread">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-      </div>
-
-      <div class="sidebar-section-label">Threads</div>
-      <div class="thread-list">
-        <button class="session-item active" data-scenario="bugfix" type="button">
-          <span class="dot emerald"></span>
-          <span class="t-name">Fix SlidingWindowLimiter</span>
-        </button>
-        <button class="session-item" data-scenario="hitl" type="button">
-          <span class="dot amber"></span>
-          <span class="t-name">Deploy Gateway (HITL)</span>
-        </button>
-        <button class="session-item" data-scenario="security" type="button">
-          <span class="dot rose"></span>
-          <span class="t-name">Guardrail &amp; Secret Audit</span>
-        </button>
-      </div>
-
-      <div class="sidebar-section-label">Changed Files</div>
-      <div id="sidebar-file-tree" class="file-list"></div>
-
-      <div class="sidebar-footer">
-        <button id="btn-quick-compact" class="footer-pill-btn" type="button" title="Run /compact context compression">
-          <span>⚡ /compact</span>
-          <span id="topbar-token-val" class="mono-dim">486 tok</span>
-        </button>
-        <div class="footer-icon-row">
-          <button id="btn-toggle-tools" class="icon-btn" type="button" title="Developer Tools (MCP / Hooks / Memory)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg>
-          </button>
-          <button id="btn-theme-toggle" class="icon-btn" type="button" title="Toggle Dark/Light Theme">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-          </button>
-          <button id="btn-open-settings" class="icon-btn" type="button" title="LLM &amp; API Key Settings">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- 2. 中央核心区：纯净 Agent 对话流 + 底部悬浮 Composer -->
-    <main class="agent-main">
-      <!-- 极简顶栏 -->
-      <header class="agent-topbar">
-        <div class="topbar-left">
-          <span class="status-dot"></span>
-          <span id="active-thread-title" class="thread-title">Fix SlidingWindowLimiter</span>
-          <span id="mode-badge" class="engine-pill">READY</span>
-        </div>
-
-        <div class="topbar-right">
-          <div class="seg-group" role="group" aria-label="Sandbox Policy">
-            <button class="seg-btn" data-policy="read-only" type="button">read-only</button>
-            <button class="seg-btn active" data-policy="workspace-write" type="button">workspace-write</button>
-            <button class="seg-btn" data-policy="full-access" type="button">full-access</button>
+  <div class="codex-app">
+    <!-- ==================== 左侧导航栏 (源自开源 Codex/ClaudeCodeUI Sidebar 架构，品牌重塑为 WG CodeX) ==================== -->
+    <aside class="codex-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-left">
+          <div class="codex-logo-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
           </div>
-          <button id="btn-toggle-diff" class="pane-toggle-btn active" type="button">
-            <span>Diff</span>
-            <span id="diff-count-badge" class="badge-count">+14 -5</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- 对话消息流 -->
-      <div id="chat-stream" class="chat-stream" role="log" aria-live="polite"></div>
-
-      <!-- 底部 1:1 Cursor / Antigravity 悬浮发光输入框 -->
-      <div class="composer-container">
-        <div class="composer-box">
-          <div class="composer-chips">
-            <span class="chip">@SlidingWindowLimiter.java</span>
-            <span class="chip accent">⚡ java-concurrency-audit</span>
-          </div>
-          <textarea
-            id="prompt-input"
-            class="composer-input"
-            rows="2"
-            placeholder="Ask Antigravity to code, debug, or run tests..."
-          ></textarea>
-          <div class="composer-bar">
-            <div class="bar-left">
-              <div class="mode-switch">
-                <button class="mode-pill active" data-agent-mode="Agent" type="button">∞ Agent</button>
-                <button class="mode-pill" data-agent-mode="Plan" type="button">Plan</button>
-                <button class="mode-pill" data-agent-mode="Ask" type="button">Ask</button>
-              </div>
-              <button id="btn-model-trigger" class="model-btn" type="button">
-                <span id="composer-model-label">deepseek-chat</span>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
+          <div>
+            <div class="brand-name-row">
+              <span class="brand-title">WG CodeX</span>
+              <span class="brand-version">v0.5</span>
             </div>
-            <button id="btn-send-prompt" class="send-btn" type="button" aria-label="Send">
-              <svg width="13" height="13" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"/></svg>
+            <div class="brand-subtitle">Cross-Platform Agent CLI &amp; Desktop</div>
+          </div>
+        </div>
+        <button id="btnNewSession" class="icon-btn" title="新建 Agent 会话 (+ New Session)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 跨平台工作区路径与操作系统切换 -->
+      <div class="sidebar-workspace-box">
+        <div class="ws-box-header">
+          <span class="ws-box-label">PROJECT WORKSPACE</span>
+          <select id="osPlatformSelect" class="os-select" title="切换跨平台路径与沙箱环境 (macOS / Windows)">
+            <option value="macos">macOS (zsh)</option>
+            <option value="windows">Windows (PS)</option>
+            <option value="linux">Linux (bash)</option>
+          </select>
+        </div>
+        <div class="ws-path-row">
+          <input id="workspaceRootInput" type="text" class="ws-path-input" value="/tmp/build-cahp" placeholder="/path/to/repo or C:\repo" />
+          <button id="btnLoadWorkspace" class="ws-path-btn" title="加载本地工作区">Load</button>
+        </div>
+      </div>
+
+      <!-- 项目与会话树 -->
+      <div class="sidebar-scroll">
+        <div class="sidebar-section">
+          <div class="sidebar-section-header">
+            <span>ACTIVE SESSIONS</span>
+            <span class="count-pill">4</span>
+          </div>
+          <div id="sessionList" class="session-tree">
+            <button class="session-node active" data-scenario="bugfix">
+              <span class="session-provider-dot codex"></span>
+              <div class="session-meta">
+                <div class="session-name">修复滑窗限流器 Off-by-One 边界</div>
+                <div class="session-sub">rate_limiter.py · 6/6 passed</div>
+              </div>
+              <span class="session-tag ok">Verified</span>
+            </button>
+            <button class="session-node" data-scenario="sql_audit">
+              <span class="session-provider-dot guard"></span>
+              <div class="session-meta">
+                <div class="session-name">拦截高危 SQL 与只读影子库审查</div>
+                <div class="session-sub">PreToolUse Hook · 0ms Block</div>
+              </div>
+              <span class="session-tag warn">Guarded</span>
+            </button>
+            <button class="session-node" data-scenario="prod_deploy">
+              <span class="session-provider-dot hitl"></span>
+              <div class="session-meta">
+                <div class="session-name">生产网关 K8s 滚动发布 (HITL)</div>
+                <div class="session-sub">CompletableFuture 挂起授权</div>
+              </div>
+              <span class="session-tag info">Approval</span>
+            </button>
+            <button class="session-node" data-scenario="compaction">
+              <span class="session-provider-dot compact"></span>
+              <div class="session-meta">
+                <div class="session-name">长程重构 85% 阈值自动压缩</div>
+                <div class="session-sub">Context Compactor · 省 69%</div>
+              </div>
+              <span class="session-tag">Compact</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 快捷配置入口：Tools/MCP 与 Skills 概览 -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-header">
+            <span>AGENT CAPABILITIES</span>
+          </div>
+          <div class="capability-quick-list">
+            <button class="cap-quick-btn" data-jump-tab="mcp">
+              <div class="cap-quick-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                  <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                  <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+                <span>Tools &amp; MCP Servers</span>
+              </div>
+              <span id="sidebarToolsBadge" class="count-pill purple">9 Active</span>
+            </button>
+            <button class="cap-quick-btn" data-jump-tab="skills">
+              <div class="cap-quick-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>Agent Skills (SKILL.md)</span>
+              </div>
+              <span id="sidebarSkillsBadge" class="count-pill green">4 Loaded</span>
+            </button>
+            <button class="cap-quick-btn" data-jump-tab="files">
+              <div class="cap-quick-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Workspace Files &amp; Diff</span>
+              </div>
+              <span id="sidebarFilesBadge" class="count-pill">3 Files</span>
             </button>
           </div>
         </div>
       </div>
-    </main>
 
-    <!-- 3. 右侧纯净代码 Diff 抽屉 (可一键收起) -->
-    <aside id="diff-pane" class="diff-pane">
-      <div class="diff-header">
-        <div id="artifact-file-tabs" class="diff-tabs"></div>
-        <div class="diff-actions">
-          <button id="btn-accept-patch" class="action-pill accept" type="button">✓ Apply</button>
-          <button id="btn-copy-diff" class="action-pill" type="button">Copy</button>
-        </div>
-      </div>
-      <div class="diff-subheader">
-        <span id="editor-breadcrumb-path">src/main/java/com/wangguoai/limiter/SlidingWindowLimiter.java</span>
-        <span id="artifact-meta-bar"></span>
-      </div>
-      <div id="diff-viewer" class="diff-code-area"></div>
-    </aside>
-  </div>
-
-  <!-- 4. 按需弹出的底层工具抽屉（默认隐藏，点击左下角 </> 按钮打开） -->
-  <div id="tools-modal" class="modal-backdrop hidden">
-    <div class="modal-card wide">
-      <div class="modal-hdr">
-        <div class="modal-tabs">
-          <button class="drawer-tab active" data-tab="tab-compact" type="button">/compact</button>
-          <button class="drawer-tab" data-tab="tab-mcp" type="button">MCP JSON-RPC</button>
-          <button class="drawer-tab" data-tab="tab-hooks" type="button">Hooks Guard</button>
-          <button class="drawer-tab" data-tab="tab-memory" type="button">Memory</button>
-        </div>
-        <button id="btn-close-tools" class="close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="tab-compact" class="drawer-pane active">
-          <div class="tool-row">
-            <span>Before: <strong id="cmp-before">1,420</strong> tok → After: <strong id="cmp-after">486</strong> tok (<strong id="cmp-ratio">65.8%</strong> saved)</span>
-            <button id="btn-run-compact" class="action-pill" type="button">Run /compact</button>
-          </div>
-          <pre id="cmp-checkpoint" class="code-pre"></pre>
-        </div>
-        <div id="tab-mcp" class="drawer-pane">
-          <div class="tool-row">
-            <select id="mcp-method-select" class="clean-input">
-              <option value="tools/list">tools/list</option>
-              <option value="tools/call:verify">tools/call (run_unit_test)</option>
-              <option value="tools/call:search">tools/call (search_codebase)</option>
-            </select>
-            <button id="btn-send-mcp" class="action-pill" type="button">Send RPC</button>
-          </div>
-          <pre id="mcp-response" class="code-pre"></pre>
-        </div>
-        <div id="tab-hooks" class="drawer-pane">
-          <div class="tool-row">
-            <input id="hook-cmd-input" class="clean-input" type="text" value="kubectl apply -f prod-voice-gateway.yaml" />
-            <input id="hook-out-input" class="clean-input" type="text" value="OPENAI_API_KEY=sk-demoMockKey0199887766554433221100" />
-            <button id="btn-eval-hook" class="action-pill" type="button">Evaluate</button>
-          </div>
-          <pre id="hook-eval-result" class="code-pre"></pre>
-          <div id="audit-list" class="mini-list"></div>
-        </div>
-        <div id="tab-memory" class="drawer-pane">
-          <div class="tool-row">
-            <input id="mem-query-input" class="clean-input" type="text" value="limiter window clock" />
-            <button id="btn-recall-mem" class="action-pill" type="button">Recall</button>
-          </div>
-          <div id="memory-list" class="mini-list"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. API Key 设置弹窗 -->
-  <div id="settings-modal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-hdr">
-        <strong>LLM Engine Settings</strong>
-        <button id="btn-close-settings" class="close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-form">
-        <label>Mode
-          <select id="cfg-mode" class="clean-input">
-            <option value="AUTO">AUTO</option>
-            <option value="LIVE_LLM">LIVE_LLM</option>
-            <option value="DETERMINISTIC">DETERMINISTIC</option>
+      <!-- 侧边栏底部：沙箱策略与模型连接状态 -->
+      <div class="sidebar-footer">
+        <div class="policy-selector-row">
+          <span class="policy-label">SANDBOX POLICY</span>
+          <select id="policySelect" class="policy-select">
+            <option value="workspace-write" selected>workspace-write</option>
+            <option value="read-only">read-only</option>
+            <option value="full-access">full-access</option>
           </select>
-        </label>
-        <label>Base URL
-          <input id="cfg-baseurl" class="clean-input" type="text" value="https://api.deepseek.com/v1" />
-        </label>
-        <label>Model
-          <input id="cfg-model" class="clean-input" type="text" value="deepseek-chat" />
-        </label>
-        <label>API Key
-          <input id="cfg-apikey" class="clean-input" type="password" placeholder="sk-..." />
-        </label>
+        </div>
+        <div class="engine-status-bar">
+          <div class="engine-status-left">
+            <span class="live-dot"></span>
+            <span id="effectiveModeBadge" class="engine-status-text">local-harness · deepseek-chat</span>
+          </div>
+          <button id="btnOpenSettingsTab" class="footer-cfg-btn" title="配置 API Key 与安全护栏">API / Hooks</button>
+        </div>
       </div>
-      <div class="modal-ftr">
-        <button id="btn-cancel-settings" class="action-pill" type="button">Cancel</button>
-        <button id="btn-save-settings" class="action-pill accept" type="button">Save</button>
-      </div>
+    </aside>
+
+    <!-- ==================== 主工作区 (WorkspaceHeader + PillBar Tabs + Multi-View Main) ==================== -->
+    <div class="codex-workspace">
+      <!-- 顶部 WorkspaceHeader -->
+      <header class="workspace-header">
+        <div class="header-breadcrumb">
+          <span class="crumb-repo" id="headerRepoName">coding-agent-harness-patterns</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-session" id="headerSessionTitle">修复滑窗限流器 Off-by-One 边界</span>
+          <span class="platform-pill" id="headerPlatformPill">macOS · Java 17</span>
+        </div>
+
+        <!-- 对标 claudecodeui WorkspaceTabs 的 PillBar 多视图切换栏 -->
+        <nav class="workspace-pillbar" role="tablist" aria-label="Workspace views">
+          <button class="pill-tab active" role="tab" data-tab="chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Chat</span>
+          </button>
+          <button class="pill-tab" role="tab" data-tab="files">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Files &amp; Diff</span>
+          </button>
+          <button class="pill-tab" role="tab" data-tab="shell">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span>Shell</span>
+          </button>
+          <button class="pill-tab" role="tab" data-tab="mcp">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+            <span>Tools &amp; MCP</span>
+            <span id="tabMcpCount" class="tab-mini-badge">9</span>
+          </button>
+          <button class="pill-tab" role="tab" data-tab="skills">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span>Skills</span>
+            <span id="tabSkillsCount" class="tab-mini-badge emerald">4</span>
+          </button>
+          <button class="pill-tab" role="tab" data-tab="settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Guardrails &amp; API</span>
+          </button>
+        </nav>
+      </header>
+
+      <!-- ==================== VIEW 1: CHAT (Codex Agent 交互主视图) ==================== -->
+      <section id="view-chat" class="workspace-view active">
+        <div class="chat-layout">
+          <div class="chat-main-column">
+            <!-- 顶部激活能力状态条：实时展示当前挂载的 Tools & Skills -->
+            <div class="chat-capability-strip">
+              <div class="strip-group">
+                <span class="strip-label">MOUNTED TOOLS:</span>
+                <div id="chatActiveToolsPills" class="strip-pills"></div>
+              </div>
+              <div class="strip-group">
+                <span class="strip-label">ACTIVE SKILLS:</span>
+                <div id="chatActiveSkillsPills" class="strip-pills"></div>
+              </div>
+              <button class="strip-config-link" data-jump-tab="mcp">+ Configure Tools / Skills</button>
+            </div>
+
+            <!-- HITL 人工审批横幅 (默认隐藏) -->
+            <div id="approvalBanner" class="hitl-banner hidden">
+              <div class="hitl-info">
+                <span class="hitl-badge">HITL APPROVAL REQUIRED</span>
+                <strong id="approvalCommandText">kubectl rollout restart deployment/wg-voice-gateway -n prod</strong>
+                <span id="approvalReasonText" class="hitl-sub">生产集群变更指令需人工确认放行</span>
+              </div>
+              <div class="hitl-actions">
+                <button id="btnApproveYes" class="btn-hitl approve">Approve &amp; Execute</button>
+                <button id="btnApproveNo" class="btn-hitl reject">Reject (Dry-Run)</button>
+              </div>
+            </div>
+
+            <!-- Agent 流式消息与工具调用轨迹流 -->
+            <div id="chatStream" class="chat-stream"></div>
+
+            <!-- 底部 Codex Composer 输入框 -->
+            <div class="codex-composer-wrap">
+              <div class="codex-composer">
+                <textarea id="promptInput" rows="2" placeholder="Ask WG CodeX to inspect code, fix bugs, run tests, or invoke MCP tools... (Enter 发送, Shift+Enter 换行)">请排查 src/gateway/rate_limiter.py 在高并发压测下偶发多放行 1 个请求的 Off-by-One 边界 Bug，自动修复并运行 pytest 验证。</textarea>
+                <div class="composer-toolbar">
+                  <div class="composer-tools-left">
+                    <div class="mode-switch" role="group">
+                      <button type="button" class="mode-pill active" data-mode="agent">Agent</button>
+                      <button type="button" class="mode-pill" data-mode="plan">Plan</button>
+                      <button type="button" class="mode-pill" data-mode="ask">Ask</button>
+                    </div>
+                    <button type="button" class="composer-chip" data-jump-tab="files" title="关联工作区文件">@File: rate_limiter.py</button>
+                    <button type="button" class="composer-chip emerald" data-jump-tab="skills" title="配置渐进式技能">/Skill: auto-match</button>
+                    <button type="button" class="composer-chip purple" data-jump-tab="mcp" title="配置 MCP 工具">MCP: 3 servers</button>
+                  </div>
+                  <div class="composer-tools-right">
+                    <span id="runStatusBadge" class="run-status-pill">READY</span>
+                    <button id="btnRunAgent" class="btn-send-codex">
+                      <span>Run Agent</span>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧紧凑实时 Diff & 产出物预览栏 -->
+          <aside class="chat-artifact-inspector">
+            <div class="inspector-header">
+              <span class="inspector-title">LIVE PATCH &amp; ARTIFACT</span>
+              <div class="inspector-tabs">
+                <button id="btnViewDiff" class="mini-tab active">Diff Patch</button>
+                <button id="btnViewSource" class="mini-tab">Full Editor</button>
+              </div>
+            </div>
+            <div id="artifactFileTabs" class="artifact-file-strip"></div>
+            <div class="inspector-meta-bar">
+              <span id="codeFilePath" class="mono-path">src/gateway/rate_limiter.py</span>
+              <span id="codeDiffStat" class="diff-stat-badge">+4 -2</span>
+            </div>
+            <pre id="codeContentBox" class="inspector-code-view"></pre>
+            <div id="editorWrapBox" class="inspector-editor-wrap hidden">
+              <textarea id="codeEditorTextarea" class="code-editor-textarea" spellcheck="false"></textarea>
+              <div class="editor-save-bar">
+                <span id="editorSaveStatus" class="save-status-hint">可直接修改源码并写回本地磁盘</span>
+                <button id="btnSaveWorkspaceFile" class="btn-primary-sm">Save to Disk</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 2: FILES & DIFF (完整代码编辑器与工作树视图) ==================== -->
+      <section id="view-files" class="workspace-view">
+        <div class="files-workbench">
+          <div class="file-tree-pane">
+            <div class="pane-title-row">
+              <span>EXPLORER</span>
+              <button id="btnRefreshFiles" class="btn-ghost-xs">Refresh</button>
+            </div>
+            <div id="explorerFileList" class="explorer-tree-list"></div>
+          </div>
+          <div class="file-editor-pane">
+            <div class="editor-top-bar">
+              <div class="editor-file-info">
+                <span id="fullEditorFilePath" class="mono-path">src/gateway/rate_limiter.py</span>
+                <span id="fullEditorDiffBadge" class="diff-stat-badge">+4 -2</span>
+              </div>
+              <div class="editor-actions">
+                <span id="fullEditorSaveMsg" class="save-status-hint">UTF-8 · LF · Mac/Win Compatible</span>
+                <button id="btnFullEditorSave" class="btn-primary-sm">Save File to Disk</button>
+              </div>
+            </div>
+            <div class="split-code-diff-grid">
+              <div class="code-column">
+                <div class="sub-pane-label">SOURCE CODE EDITOR (LIVE WRITE)</div>
+                <textarea id="fullEditorTextarea" class="full-code-textarea" spellcheck="false"></textarea>
+              </div>
+              <div class="code-column">
+                <div class="sub-pane-label">UNIFIED GIT DIFF PREVIEW</div>
+                <pre id="fullDiffPreview" class="full-diff-pre"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: SHELL (跨平台 macOS / Windows 沙箱终端) ==================== -->
+      <section id="view-shell" class="workspace-view">
+        <div class="shell-workbench">
+          <div class="shell-header-bar">
+            <div class="shell-title-group">
+              <span class="terminal-dot green"></span>
+              <strong id="shellPromptTitle">WG CodeX Cross-Platform Sandbox Terminal (macOS zsh / Windows PowerShell)</strong>
+            </div>
+            <div class="shell-preset-btns">
+              <button class="btn-ghost-xs shell-preset" data-cmd="pytest -q">pytest -q</button>
+              <button class="btn-ghost-xs shell-preset" data-cmd="mvn -q test">mvn -q test</button>
+              <button class="btn-ghost-xs shell-preset" data-cmd="git status">git status</button>
+              <button class="btn-ghost-xs shell-preset danger" data-cmd="rm -rf /tmp/prod-db">Test Guardrail Block (rm -rf)</button>
+            </div>
+          </div>
+          <div id="shellOutputBox" class="shell-terminal-body"></div>
+          <div class="shell-input-bar">
+            <span id="shellPromptPrefix" class="shell-ps1">wangguo@wg-codex-mac build-cahp %</span>
+            <input id="shellCommandInput" type="text" class="shell-cmd-input" value="pytest -q" placeholder="输入终端命令 (经过 PreToolUse Hook 安全审计后执行)..." />
+            <button id="btnExecShell" class="btn-primary-sm">Execute</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 4: TOOLS & MCP (对标 claudecodeui McpServers.tsx 的工具与 MCP 配置中心) ==================== -->
+      <section id="view-mcp" class="workspace-view">
+        <div class="config-page-container">
+          <div class="config-page-header">
+            <div>
+              <h2 class="config-page-title">Tools &amp; Model Context Protocol (MCP) Servers</h2>
+              <p class="config-page-desc">可视化开关 Built-in Harness 工具、新增或管理跨平台 MCP Server 节点（支持 <code>stdio</code> / <code>sse</code> / <code>http</code>），并实时调试 JSON-RPC 2.0 协议栈。</p>
+            </div>
+            <button id="btnOpenAddMcpModal" class="btn-primary-md">+ Add MCP Server / Tool</button>
+          </div>
+
+          <!-- 新增 MCP Server 折叠表单面板 -->
+          <div id="addMcpFormCard" class="modal-inline-card hidden">
+            <div class="modal-inline-header">
+              <strong>Add Custom MCP Server &amp; Tool</strong>
+              <button id="btnCloseAddMcpModal" class="btn-ghost-xs">Cancel</button>
+            </div>
+            <div class="form-grid-3">
+              <label>Server Name
+                <input id="mcpNewName" type="text" value="wg-redis-cluster-mcp" placeholder="e.g. wg-k8s-inspector-mcp" />
+              </label>
+              <label>Transport Protocol
+                <select id="mcpNewTransport">
+                  <option value="stdio">stdio (Local Process)</option>
+                  <option value="sse">sse (Server-Sent Events)</option>
+                  <option value="http">http (Streamable HTTP)</option>
+                </select>
+              </label>
+              <label>Scope
+                <select id="mcpNewScope">
+                  <option value="user">user (~/.codex/mcp.json)</option>
+                  <option value="project">project (.codex/mcp.json)</option>
+                </select>
+              </label>
+              <label>Exposed Tool Name
+                <input id="mcpNewToolName" type="text" value="inspect_redis_hotkey" placeholder="e.g. inspect_redis_hotkey" />
+              </label>
+              <label class="span-2">Command or Endpoint URL (Mac/Win Compatible)
+                <input id="mcpNewCommand" type="text" value="npx -y @wangguode/mcp-redis-inspector --cluster" />
+              </label>
+              <label class="span-3">Tool Description
+                <input id="mcpNewDesc" type="text" value="扫描 Redis 分片热 Key、大 Key 分布与 TTL 倾斜度" />
+              </label>
+            </div>
+            <div class="modal-inline-footer">
+              <button id="btnConfirmAddMcp" class="btn-primary-sm">Save &amp; Register MCP Server</button>
+            </div>
+          </div>
+
+          <div class="mcp-two-col-grid">
+            <!-- 左列：Built-in Tools 开关列表 + MCP Servers 卡片列表 -->
+            <div class="mcp-list-col">
+              <div class="sub-card">
+                <div class="sub-card-header">
+                  <span>BUILT-IN HARNESS TOOLS (SANDBOX KERNEL)</span>
+                  <span class="sub-card-hint">切换开关立即影响 Agent 可调用的工具集</span>
+                </div>
+                <div id="builtInToolsGrid" class="builtin-tools-grid"></div>
+              </div>
+
+              <div class="sub-card">
+                <div class="sub-card-header">
+                  <span>CONFIGURED MCP SERVERS (CODEX / CLAUDE COMPATIBLE)</span>
+                  <span class="sub-card-hint">支持 stdio / sse / http</span>
+                </div>
+                <div id="mcpServersList" class="mcp-servers-list"></div>
+              </div>
+            </div>
+
+            <!-- 右列：JSON-RPC 2.0 实时交互调试器 -->
+            <div class="mcp-debugger-col">
+              <div class="sub-card sticky-card">
+                <div class="sub-card-header">
+                  <span>MCP JSON-RPC 2.0 LIVE INSPECTOR</span>
+                  <span class="badge-protocol">protocol: 2024-11-05</span>
+                </div>
+                <div class="rpc-quick-btns">
+                  <button class="btn-ghost-xs rpc-preset" data-rpc="list">tools/list</button>
+                  <button class="btn-ghost-xs rpc-preset" data-rpc="voice">call: diagnose_voice_latency</button>
+                  <button class="btn-ghost-xs rpc-preset" data-rpc="loop">call: check_loop_convergence</button>
+                  <button class="btn-ghost-xs rpc-preset" data-rpc="sql">call: explain_sql_query</button>
+                </div>
+                <label class="field-label">JSON-RPC Request Payload</label>
+                <textarea id="mcpRpcInput" class="rpc-textarea" rows="7"></textarea>
+                <button id="btnSendMcpRpc" class="btn-primary-sm full-width">Send JSON-RPC Request</button>
+                <label class="field-label">Server Response</label>
+                <pre id="mcpRpcOutput" class="rpc-output-pre"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 5: SKILLS (对标 claudecodeui ProviderSkills.tsx 的渐进式技能管理中心) ==================== -->
+      <section id="view-skills" class="workspace-view">
+        <div class="config-page-container">
+          <div class="config-page-header">
+            <div>
+              <h2 class="config-page-title">Agent Skills Progressive Disclosure Manager (SKILL.md)</h2>
+              <p class="config-page-desc">遵循 <code>~/.agents/skills/&lt;skill-name&gt;/SKILL.md</code> 三层渐进式披露规范：平时仅驻留 ~30 Tokens YAML 索引，命中任务时按需加载完整 SOP 正文。支持在线编辑、启用/禁用与创建自定义技能。</p>
+            </div>
+            <button id="btnNewSkill" class="btn-primary-md">+ New Skill (SKILL.md)</button>
+          </div>
+
+          <div class="skills-workbench-grid">
+            <!-- 左侧：按 Scope 展示的技能卡片列表 (带 Enable Toggle) -->
+            <div class="skills-list-pane">
+              <div id="skillsCardsContainer" class="skills-cards-stack"></div>
+            </div>
+
+            <!-- 右侧：SKILL.md 在线编辑器 -->
+            <div class="skill-editor-pane">
+              <div class="sub-card">
+                <div class="sub-card-header">
+                  <span id="skillEditorHeaderTitle">EDIT SKILL.MD SPECIFICATION</span>
+                  <span id="skillTokenSavingsBadge" class="badge-emerald">节省 91.9% 常驻上下文</span>
+                </div>
+                <div class="form-grid-3">
+                  <label>Skill Name (ID)
+                    <input id="skillEditName" type="text" placeholder="e.g. k8s-canary-rollback" />
+                  </label>
+                  <label>Scope
+                    <select id="skillEditScope">
+                      <option value="user">user (~/.agents/skills)</option>
+                      <option value="repo">repo (.agents/skills)</option>
+                      <option value="project">project (.codex/skills)</option>
+                      <option value="system">system (built-in)</option>
+                    </select>
+                  </label>
+                  <label>Bundled Scripts (Comma Separated)
+                    <input id="skillEditScripts" type="text" placeholder="scripts/check.py, references/spec.md" />
+                  </label>
+                  <label class="span-3">Trigger Description (Level-1 Index Resident in Context)
+                    <input id="skillEditDesc" type="text" placeholder="描述何时激活该技能..." />
+                  </label>
+                </div>
+                <label class="field-label">SKILL.md Full Body (YAML Frontmatter + Markdown Instructions)</label>
+                <textarea id="skillEditBody" class="skill-md-textarea" rows="12" spellcheck="false"></textarea>
+                <div class="skill-editor-footer">
+                  <span id="skillSaveFeedback" class="save-status-hint">修改保存后立即在 Chat 视图的 Agent Loop 中生效</span>
+                  <div class="skill-editor-btns">
+                    <button id="btnDeleteSkill" class="btn-danger-xs">Delete Skill</button>
+                    <button id="btnSaveSkill" class="btn-primary-sm">Save SKILL.md</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 6: GUARDRAILS & API SETTINGS ==================== -->
+      <section id="view-settings" class="workspace-view">
+        <div class="config-page-container">
+          <div class="config-page-header">
+            <div>
+              <h2 class="config-page-title">LLM Provider API, Hook Guardrails &amp; Cross-Platform Desktop</h2>
+              <p class="config-page-desc">配置 OpenAI / DeepSeek / Claude 兼容接口密钥、测试 PreToolUse / PostToolUse 护栏策略，并获取 macOS / Windows 桌面端一键启动指令。</p>
+            </div>
+          </div>
+
+          <div class="settings-two-col">
+            <!-- LLM API 配置卡片 -->
+            <div class="sub-card">
+              <div class="sub-card-header">
+                <span>LLM PROVIDER &amp; MODEL CONFIGURATION</span>
+                <span class="badge-protocol">Hot-Reload</span>
+              </div>
+              <div class="form-stack">
+                <label>Run Mode
+                  <select id="llmRunMode">
+                    <option value="mock">local-harness (内置真实代码沙箱引擎，零 Key 开箱即用)</option>
+                    <option value="cloud">cloud (连接真实 DeepSeek / OpenAI / Claude API)</option>
+                  </select>
+                </label>
+                <label>OpenAI-Compatible Base URL
+                  <input id="llmBaseUrl" type="text" value="https://api.deepseek.com/v1" />
+                </label>
+                <label>Model ID
+                  <input id="llmModel" type="text" value="deepseek-chat" />
+                </label>
+                <label>API Key (仅驻留服务端内存，绝不落盘或进日志)
+                  <input id="llmApiKey" type="password" placeholder="sk-..." />
+                </label>
+                <div class="settings-action-row">
+                  <span id="settingsStatusText" class="save-status-hint">支持 DeepSeek-V3 / GPT-4.1 / Claude 3.7 Sonnet</span>
+                  <button id="btnSaveSettings" class="btn-primary-sm">Save &amp; Apply Engine</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pre/Post Hook 护栏与上下文压缩实验台 -->
+            <div class="sub-card">
+              <div class="sub-card-header">
+                <span>PRE/POST-TOOL HOOK GUARDRAIL &amp; COMPACTION TESTER</span>
+                <span class="badge-emerald">0ms Regex + AST Guard</span>
+              </div>
+              <div class="form-stack">
+                <label>Test Bash Command (PreToolUse Interception)
+                  <input id="hookCmdInput" type="text" value="rm -rf /var/lib/postgresql/data" />
+                </label>
+                <label>Test Output Secret Redaction (PostToolUse)
+                  <input id="hookSecretInput" type="text" value="export OPENAI_API_KEY=sk-demoMockKey0123456789abcdef" />
+                </label>
+                <div class="settings-action-row">
+                  <button id="btnEvalHook" class="btn-primary-sm">Evaluate Hook Guardrail</button>
+                  <button id="btnRunCompaction" class="btn-ghost-xs">Run 85% Context Compaction</button>
+                </div>
+                <pre id="hookEvalOutput" class="rpc-output-pre"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- macOS & Windows 跨平台启动指南 -->
+          <div class="sub-card">
+            <div class="sub-card-header">
+              <span>MACOS / WINDOWS / ELECTRON DESKTOP LAUNCHERS</span>
+              <span class="badge-protocol">Cross-Platform Ready</span>
+            </div>
+            <div class="platform-cards-grid">
+              <div class="platform-box">
+                <strong>macOS / Linux 一键启动</strong>
+                <code>./start-mac-linux.sh</code>
+                <p>自动检测 JDK 17+ 与端口 8090，启动后端服务并自动打开 WG CodeX 桌面/浏览器工作台。</p>
+              </div>
+              <div class="platform-box">
+                <strong>Windows 10/11 一键启动</strong>
+                <code>start-windows.bat</code>
+                <p>原生支持 Windows CMD / PowerShell 与 `C:\...` 盘符路径解析，双击即可运行。</p>
+              </div>
+              <div class="platform-box">
+                <strong>Electron 独立桌面客户端 (Mac/Win)</strong>
+                <code>cd desktop-shell &amp;&amp; npm start</code>
+                <p>基于 Electron 跨平台外壳封装，提供原生 macOS `.app` 与 Windows `.exe` 沉浸式桌面窗口。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
-  <div id="sidebar-skills" class="hidden"></div>
-  <span id="active-policy-tag" class="hidden"></span>
-  <script src="/app.js"></script>
+  <script src="/studio.js"></script>
 </body>
 </html>
